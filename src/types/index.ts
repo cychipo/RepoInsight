@@ -35,6 +35,9 @@ export interface ElectronAPI {
     repoPath: string,
     branchName: string
   ) => Promise<{ success: boolean; error?: string }>;
+  rebase: (
+    repoPath: string
+  ) => Promise<{ success: boolean; message?: string; error?: string }>;
 
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
@@ -45,6 +48,16 @@ export interface ElectronAPI {
   removeAnalysisProgressListener: () => void;
   onCloneProgress: (callback: (progress: CloneProgress) => void) => void;
   removeCloneProgressListener: () => void;
+
+  // Settings
+  getGitConfig: (key: string, repoPath?: string) => Promise<string>;
+  setGitConfig: (
+    key: string,
+    value: string,
+    repoPath?: string
+  ) => Promise<boolean>;
+  getApiKey: () => Promise<string>;
+  setApiKey: (key: string) => Promise<boolean>;
 }
 
 // Branch type

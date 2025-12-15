@@ -3,13 +3,15 @@
     <div class="flex items-center justify-between flex-wrap gap-4">
       <div class="flex items-center gap-6">
         <h1 class="text-2xl font-bold uppercase">
-          {{ viewMode === "knowledge" ? "◈ BIỂU ĐỒ TRI THỨC" : "◈ BIỂU ĐỒ GIT" }}
+          {{
+            viewMode === "knowledge" ? "◈ BIỂU ĐỒ TRI THỨC" : "◈ BIỂU ĐỒ GIT"
+          }}
         </h1>
         <div class="flex gap-0">
           <button
             class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-neo-yellow"
             :class="{
-              '!bg-neo-blue shadow-[inset_0_0_0_2px_black]':
+              'bg-neo-blue! shadow-[inset_0_0_0_2px_black]':
                 viewMode === 'knowledge',
             }"
             @click="viewMode = 'knowledge'">
@@ -18,7 +20,7 @@
           <button
             class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-neo-yellow"
             :class="{
-              '!bg-neo-blue shadow-[inset_0_0_0_2px_black]': viewMode === 'git',
+              'bg-neo-blue! shadow-[inset_0_0_0_2px_black]': viewMode === 'git',
             }"
             @click="viewMode = 'git'">
             BIỂU ĐỒ GIT
@@ -30,9 +32,9 @@
           <button
             v-for="nodeType in nodeTypes"
             :key="nodeType.id"
-            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 flex items-center gap-2 hover:bg-[var(--filter-color)]"
+            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 flex items-center gap-2 hover:bg-(--filter-color)"
             :class="{
-              '!bg-[var(--filter-color)] shadow-[inset_0_0_0_2px_black]':
+              'bg-(--filter-color)! shadow-[inset_0_0_0_2px_black]':
                 activeFilters.includes(nodeType.id),
               'opacity-60': !activeFilters.includes(nodeType.id),
             }"
@@ -62,9 +64,7 @@
             class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center p-6">
             <div class="text-6xl opacity-30">◈</div>
             <h3 class="text-xl font-bold m-0">KHÔNG CÓ DỮ LIỆU BIỂU ĐỒ</h3>
-            <p>
-              Chọn một kho chứa từ trang chủ để tạo biểu đồ tri thức.
-            </p>
+            <p>Chọn một kho chứa từ trang chủ để tạo biểu đồ tri thức.</p>
             <router-link to="/" class="btn btn-primary">
               ◆ MỞ KHO CHỨA
             </router-link>
@@ -88,7 +88,7 @@
           </div>
 
           <div class="flex-1 overflow-y-auto">
-            <h3 class="text-lg font-bold mb-4 break-words">
+            <h3 class="text-lg font-bold mb-4 wrap-break-word">
               {{ selectedNode.label }}
             </h3>
 
@@ -206,13 +206,13 @@
         <div class="flex items-center gap-6">
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span
-              class="w-[14px] h-[14px] border-2 border-neo-black *bg-neo-blue"
+              class="w-[14px] h-[14px] border-2 border-neo-black bg-neo-blue"
               style="background: #00d4ff !important"></span>
             <span>COMMIT</span>
           </div>
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span
-              class="w-[14px] h-[14px] border-2 border-neo-black *bg-neo-green"
+              class="w-[14px] h-[14px] border-2 border-neo-black bg-neo-green"
               style="background: #7cff6b !important"></span>
             <span>TỆP</span>
           </div>
@@ -465,12 +465,12 @@ watch(viewMode, (mode) => {
   if (mode === "knowledge" && graphStore.hasData) {
     // Optimization: Just resize and fit instead of re-initializing
     setTimeout(() => {
-        if (cy) {
-            cy.resize();
-            cy.fit();
-        } else {
-            initGraph();
-        }
+      if (cy) {
+        cy.resize();
+        cy.fit();
+      } else {
+        initGraph();
+      }
     }, 100);
   }
 });
