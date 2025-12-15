@@ -303,14 +303,16 @@ function getStatusIcon(status: string): string {
 }
 
 .view-header {
-  position: absolute;
+  position: fixed;
   top: var(--spacing-lg);
-  left: var(--spacing-lg);
+  left: calc(200px + var(--spacing-lg) * 2);
   right: var(--spacing-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 10;
+  background: var(--bg-primary);
+  padding: var(--spacing-sm) 0;
 }
 
 .view-header h1 {
