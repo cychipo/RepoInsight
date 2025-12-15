@@ -1,6 +1,7 @@
 {
     "appId": "com.repoinsight.app",
     "productName": "RepoInsight",
+    "icon": "public/icon.png",
     "directories": {
         "output": "release"
     },
