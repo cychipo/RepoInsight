@@ -2,8 +2,10 @@ import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import { join } from "path";
 import { existsSync } from "fs";
 import { registerGitHandlers } from "./ipc/git-handlers";
+import { registerSettingsHandlers } from "./ipc/settings-handlers";
 
 let mainWindow: BrowserWindow | null = null;
+
 
 function createWindow() {
   // In dev mode, __dirname is dist-electron/, in production it's resources/app/dist-electron/
@@ -42,6 +44,7 @@ function createWindow() {
 app.whenReady().then(() => {
   // Register IPC handlers
   registerGitHandlers();
+  registerSettingsHandlers();
 
   createWindow();
 });

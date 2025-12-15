@@ -60,6 +60,15 @@
         </router-link>
 
         <router-link
+          to="/settings"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
+          active-class="bg-neo-pink !border-neo-black shadow-brutal"
+          :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
+          <span class="text-lg">⚙</span>
+          <span>CÀI ĐẶT</span>
+        </router-link>
+
+        <router-link
           to="/changes"
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"

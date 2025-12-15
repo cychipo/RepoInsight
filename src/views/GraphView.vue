@@ -455,7 +455,7 @@ async function initGraph() {
 watch(
   () => graphStore.hasData,
   (hasData) => {
-    if (hasData && viewMode.value === "knowledge") {
+    if (hasData && viewMode.value === "knowledge" && !cy) {
       initGraph();
     }
   }
@@ -463,8 +463,15 @@ watch(
 
 watch(viewMode, (mode) => {
   if (mode === "knowledge" && graphStore.hasData) {
-    // Re-init graph when switching back to knowledge view
-    setTimeout(() => initGraph(), 100);
+    // Optimization: Just resize and fit instead of re-initializing
+    setTimeout(() => {
+        if (cy) {
+            cy.resize();
+            cy.fit();
+        } else {
+            initGraph();
+        }
+    }, 100);
   }
 });
 
