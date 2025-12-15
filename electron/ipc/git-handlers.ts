@@ -786,10 +786,20 @@ export function registerGitHandlers() {
         //   ?? file.txt - untracked file
         //   D  file.txt - staged deletion
         //   _D file.txt - unstaged deletion
-        const output = await runGitCommand(repoPath, "status --porcelain");
+
+        // IMPORTANT: Use execAsync directly instead of runGitCommand
+        // because we need to preserve leading spaces in each line
+        const { stdout } = await execAsync("git status --porcelain", {
+          cwd: repoPath,
+          maxBuffer: 50 * 1024 * 1024,
+        });
 
         const changes: { path: string; status: string; staged: boolean }[] = [];
-        const lines = output.split("\n").filter((l) => l.trim());
+        // Split by newline but DON'T trim individual lines - we need the leading space
+        const lines = stdout.split("\n").filter((l) => l.length > 0);
+
+        console.log("[git:getStatus] Raw output:", JSON.stringify(stdout));
+        console.log("[git:getStatus] Parsed lines:", lines);
 
         for (const line of lines) {
           if (line.length < 3) continue;
@@ -797,6 +807,10 @@ export function registerGitHandlers() {
           const stagedStatus = line[0];
           const unstagedStatus = line[1];
           const filePath = line.substring(3).trim();
+
+          console.log(
+            `[git:getStatus] Line: "${line}" | stagedStatus: "${stagedStatus}" | unstagedStatus: "${unstagedStatus}" | path: "${filePath}"`
+          );
 
           // Handle untracked files (both X and Y are ?)
           if (stagedStatus === "?" && unstagedStatus === "?") {
@@ -810,6 +824,7 @@ export function registerGitHandlers() {
 
           // If there's a staged change (X is not space and not ?)
           if (stagedStatus !== " " && stagedStatus !== "?") {
+            console.log(`[git:getStatus] Adding as STAGED: ${filePath}`);
             changes.push({
               path: filePath,
               status: getStatusLabel(stagedStatus),
@@ -819,6 +834,7 @@ export function registerGitHandlers() {
 
           // If there's an unstaged change (Y is not space and not ? since we handled untracked above)
           if (unstagedStatus !== " " && unstagedStatus !== "?") {
+            console.log(`[git:getStatus] Adding as UNSTAGED: ${filePath}`);
             changes.push({
               path: filePath,
               status: getStatusLabel(unstagedStatus),
@@ -827,6 +843,7 @@ export function registerGitHandlers() {
           }
         }
 
+        console.log("[git:getStatus] Final changes:", changes);
         return changes;
       } catch (error) {
         console.error("Failed to get status:", error);
