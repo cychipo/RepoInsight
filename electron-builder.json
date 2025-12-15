@@ -1,0 +1,35 @@
+{
+    "appId": "com.repoinsight.app",
+    "productName": "RepoInsight",
+    "directories": {
+        "output": "release"
+    },
+    "files": [
+        "dist/**/*",
+        "dist-electron/**/*"
+    ],
+    "mac": {
+        "category": "public.app-category.developer-tools",
+        "target": [
+            "dmg",
+            "zip"
+        ]
+    },
+    "win": {
+        "target": [
+            "nsis",
+            "zip"
+        ]
+    },
+    "linux": {
+        "target": [
+            "AppImage",
+            "deb"
+        ],
+        "category": "Development"
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true
+    }
+}
