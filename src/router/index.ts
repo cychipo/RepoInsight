@@ -22,6 +22,11 @@ const routes: RouteRecordRaw[] = [
     name: "timeline",
     component: () => import("@/views/TimelineView.vue"),
   },
+  {
+    path: "/changes",
+    name: "changes",
+    component: () => import("@/views/ChangesView.vue"),
+  },
 ];
 
 const router = createRouter({
