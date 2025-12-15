@@ -778,6 +778,14 @@ export function registerGitHandlers() {
       try {
         // git status --porcelain gives us: XY filename
         // X = staged status, Y = unstaged status
+        // Examples:
+        //   M  file.txt - staged modification
+        //   _M file.txt - unstaged modification (where _ is space)
+        //   MM file.txt - both staged and unstaged modifications
+        //   A  file.txt - staged new file
+        //   ?? file.txt - untracked file
+        //   D  file.txt - staged deletion
+        //   _D file.txt - unstaged deletion
         const output = await runGitCommand(repoPath, "status --porcelain");
 
         const changes: { path: string; status: string; staged: boolean }[] = [];
@@ -790,7 +798,17 @@ export function registerGitHandlers() {
           const unstagedStatus = line[1];
           const filePath = line.substring(3).trim();
 
-          // If there's a staged change
+          // Handle untracked files (both X and Y are ?)
+          if (stagedStatus === "?" && unstagedStatus === "?") {
+            changes.push({
+              path: filePath,
+              status: "untracked",
+              staged: false,
+            });
+            continue;
+          }
+
+          // If there's a staged change (X is not space and not ?)
           if (stagedStatus !== " " && stagedStatus !== "?") {
             changes.push({
               path: filePath,
@@ -798,8 +816,9 @@ export function registerGitHandlers() {
               staged: true,
             });
           }
-          // If there's an unstaged change
-          if (unstagedStatus !== " ") {
+
+          // If there's an unstaged change (Y is not space and not ? since we handled untracked above)
+          if (unstagedStatus !== " " && unstagedStatus !== "?") {
             changes.push({
               path: filePath,
               status: getStatusLabel(unstagedStatus),
@@ -831,7 +850,10 @@ export function registerGitHandlers() {
       let stashed = false;
       try {
         // 1. Check for uncommitted changes
-        const statusOutput = await runGitCommand(repoPath, "status --porcelain");
+        const statusOutput = await runGitCommand(
+          repoPath,
+          "status --porcelain"
+        );
         const isDirty = statusOutput.trim().length > 0;
 
         // 2. Auto-stash if dirty
@@ -850,19 +872,42 @@ export function registerGitHandlers() {
           "rev-parse --abbrev-ref HEAD"
         );
 
-        // 4. Rebase from origin
-        // Fetch first to be sure? pull --rebase does fetch.
-        await runGitCommand(
-          repoPath,
-          `pull --rebase origin ${currentBranch.trim()}`
-        );
+        // 4. Use spawn for pull --rebase to avoid EPIPE crashes
+        await new Promise<void>((resolve, reject) => {
+          const args = ["pull", "--rebase", "origin", currentBranch.trim()];
+          const gitProcess = spawn("git", args, {
+            cwd: repoPath,
+            stdio: ["ignore", "pipe", "pipe"],
+          });
 
-        // 5. Pop stash if we stashed
+          let stderr = "";
+
+          gitProcess.stderr.on("data", (data: Buffer) => {
+            stderr += data.toString();
+          });
+
+          gitProcess.on("close", (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(
+                new Error(
+                  stderr || `git pull --rebase failed with code ${code}`
+                )
+              );
+            }
+          });
+
+          gitProcess.on("error", (err) => {
+            reject(err);
+          });
+        });
+
+        // 6. Pop stash if we stashed
         if (stashed) {
           try {
             await runGitCommand(repoPath, "stash pop");
           } catch (e) {
-            // Stash pop conflict
             console.warn("Stash pop conflict:", e);
             return {
               success: true,
@@ -883,6 +928,16 @@ export function registerGitHandlers() {
         };
       } catch (error: any) {
         console.error("Rebase failed:", error);
+
+        // If we stashed but rebase failed, try to pop stash back
+        if (stashed) {
+          try {
+            await runGitCommand(repoPath, "stash pop");
+          } catch (popError) {
+            console.error("Failed to pop stash after rebase error:", popError);
+          }
+        }
+
         return {
           success: false,
           message: error.message || "Rebase thất bại. Vui lòng kiểm tra log.",
@@ -909,6 +964,228 @@ export function registerGitHandlers() {
           error:
             error instanceof Error ? error.message : "Failed to switch branch",
         };
+      }
+    }
+  );
+
+  // Stage a single file
+  ipcMain.handle(
+    "git:stageFile",
+    async (
+      _,
+      repoPath: string,
+      filePath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        await runGitCommand(repoPath, `add "${filePath}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Stage failed",
+        };
+      }
+    }
+  );
+
+  // Unstage a single file
+  ipcMain.handle(
+    "git:unstageFile",
+    async (
+      _,
+      repoPath: string,
+      filePath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        await runGitCommand(repoPath, `reset HEAD "${filePath}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unstage failed",
+        };
+      }
+    }
+  );
+
+  // Stage all files
+  ipcMain.handle(
+    "git:stageAll",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        await runGitCommand(repoPath, "add -A");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Stage all failed",
+        };
+      }
+    }
+  );
+
+  // Unstage all files
+  ipcMain.handle(
+    "git:unstageAll",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        await runGitCommand(repoPath, "reset HEAD");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unstage all failed",
+        };
+      }
+    }
+  );
+
+  // Discard changes for a single file
+  ipcMain.handle(
+    "git:discardFile",
+    async (
+      _,
+      repoPath: string,
+      filePath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        // For tracked files, checkout the file
+        // For untracked files, we need to remove them
+        const statusOutput = await runGitCommand(
+          repoPath,
+          `status --porcelain "${filePath}"`
+        );
+        if (statusOutput.startsWith("??")) {
+          // Untracked file - delete it
+          const fullPath = join(repoPath, filePath);
+          const fs = await import("fs/promises");
+          await fs.unlink(fullPath);
+        } else {
+          // Tracked file - checkout
+          await runGitCommand(repoPath, `checkout -- "${filePath}"`);
+        }
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Discard failed",
+        };
+      }
+    }
+  );
+
+  // Discard all unstaged changes
+  ipcMain.handle(
+    "git:discardAll",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        // Checkout all tracked files
+        await runGitCommand(repoPath, "checkout -- .");
+        // Clean untracked files
+        await runGitCommand(repoPath, "clean -fd");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Discard all failed",
+        };
+      }
+    }
+  );
+
+  // Commit staged changes
+  ipcMain.handle(
+    "git:commit",
+    async (
+      _,
+      repoPath: string,
+      message: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const escapedMessage = message.replace(/"/g, '\\"');
+        await runGitCommand(repoPath, `commit -m "${escapedMessage}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Commit failed",
+        };
+      }
+    }
+  );
+
+  // Push to remote
+  ipcMain.handle(
+    "git:push",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        await runGitCommand(repoPath, "push");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Push failed",
+        };
+      }
+    }
+  );
+
+  // Get diff for staged files
+  ipcMain.handle(
+    "git:getStagedDiff",
+    async (_, repoPath: string): Promise<string> => {
+      try {
+        return await runGitCommand(repoPath, "diff --cached");
+      } catch (error) {
+        console.error("Failed to get staged diff:", error);
+        return "";
+      }
+    }
+  );
+
+  // Get diff for unstaged files
+  ipcMain.handle(
+    "git:getUnstagedDiff",
+    async (_, repoPath: string): Promise<string> => {
+      try {
+        return await runGitCommand(repoPath, "diff");
+      } catch (error) {
+        console.error("Failed to get unstaged diff:", error);
+        return "";
+      }
+    }
+  );
+
+  // Get diff for a single file (staged or unstaged)
+  ipcMain.handle(
+    "git:getFileDiff",
+    async (
+      _,
+      repoPath: string,
+      filePath: string,
+      staged: boolean
+    ): Promise<string> => {
+      try {
+        const stagedFlag = staged ? "--cached" : "";
+        return await runGitCommand(
+          repoPath,
+          `diff ${stagedFlag} -- "${filePath}"`
+        );
+      } catch (error) {
+        console.error("Failed to get file diff:", error);
+        return "";
       }
     }
   );
