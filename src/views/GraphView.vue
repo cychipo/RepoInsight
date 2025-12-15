@@ -1,33 +1,21 @@
 <template>
   <div class="graph-view">
     <div class="view-header">
-      <h1>Knowledge Graph</h1>
+      <h1>◈ KNOWLEDGE GRAPH</h1>
       <div class="view-actions">
         <div class="filter-group">
           <button
             v-for="nodeType in nodeTypes"
             :key="nodeType.id"
-            class="btn btn-ghost"
+            class="filter-btn"
             :class="{ active: activeFilters.includes(nodeType.id) }"
+            :style="{ '--filter-color': nodeType.color }"
             @click="toggleFilter(nodeType.id)">
-            <span
-              class="filter-dot"
-              :style="{ background: nodeType.color }"></span>
             {{ nodeType.label }}
           </button>
         </div>
         <button class="btn btn-secondary" @click="resetView">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <polyline points="1,4 1,10 7,10" />
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-          </svg>
-          Reset View
+          ↻ RESET VIEW
         </button>
       </div>
     </div>
@@ -36,26 +24,14 @@
       <!-- Graph Canvas -->
       <div ref="graphContainer" class="graph-canvas">
         <div v-if="!graphStore.hasData" class="empty-state">
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--text-muted)"
-            stroke-width="1.5">
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-          </svg>
-          <h3>No Graph Data</h3>
+          <div class="empty-icon">◈</div>
+          <h3>NO GRAPH DATA</h3>
           <p>
             Select a repository from the home page to generate the knowledge
             graph.
           </p>
           <router-link to="/" class="btn btn-primary">
-            Open Repository
+            ◆ OPEN REPOSITORY
           </router-link>
         </div>
       </div>
@@ -63,20 +39,13 @@
       <!-- Node Details Panel -->
       <aside v-if="selectedNode" class="details-panel card">
         <div class="panel-header">
-          <div class="node-type-badge" :class="`badge-${selectedNode.type}`">
-            {{ selectedNode.type }}
+          <div
+            class="node-type-badge"
+            :style="{ background: getNodeColor(selectedNode.type) }">
+            {{ selectedNode.type.toUpperCase() }}
           </div>
           <button class="btn btn-icon btn-ghost" @click="selectedNode = null">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            ✕
           </button>
         </div>
 
@@ -86,41 +55,41 @@
           <div class="metadata-section">
             <template v-if="selectedNode.type === 'commit'">
               <div class="meta-item">
-                <span class="meta-label">Hash</span>
+                <span class="meta-label">HASH</span>
                 <code class="meta-value">{{ selectedNode.metadata.hash }}</code>
               </div>
               <div class="meta-item">
-                <span class="meta-label">Author</span>
+                <span class="meta-label">AUTHOR</span>
                 <span class="meta-value">{{
                   selectedNode.metadata.author
                 }}</span>
               </div>
               <div class="meta-item">
-                <span class="meta-label">Date</span>
+                <span class="meta-label">DATE</span>
                 <span class="meta-value">{{
                   formatDate(selectedNode.metadata.date)
                 }}</span>
               </div>
               <div class="meta-item full">
-                <span class="meta-label">Message</span>
+                <span class="meta-label">MESSAGE</span>
                 <p class="meta-value">{{ selectedNode.metadata.message }}</p>
               </div>
             </template>
 
             <template v-else-if="selectedNode.type === 'file'">
               <div class="meta-item">
-                <span class="meta-label">Path</span>
+                <span class="meta-label">PATH</span>
                 <code class="meta-value">{{ selectedNode.metadata.path }}</code>
               </div>
               <div class="meta-item">
-                <span class="meta-label">Language</span>
+                <span class="meta-label">LANGUAGE</span>
                 <span class="meta-value">{{
                   selectedNode.metadata.language
                 }}</span>
               </div>
               <div class="meta-item">
-                <span class="meta-label">Modifications</span>
-                <span class="meta-value">{{
+                <span class="meta-label">MODIFICATIONS</span>
+                <span class="meta-value highlight">{{
                   selectedNode.metadata.modifyCount
                 }}</span>
               </div>
@@ -128,25 +97,25 @@
 
             <template v-else-if="selectedNode.type === 'function'">
               <div class="meta-item">
-                <span class="meta-label">Name</span>
+                <span class="meta-label">NAME</span>
                 <code class="meta-value">{{ selectedNode.metadata.name }}</code>
               </div>
               <div class="meta-item">
-                <span class="meta-label">File</span>
+                <span class="meta-label">FILE</span>
                 <code class="meta-value truncate">{{
                   selectedNode.metadata.filePath
                 }}</code>
               </div>
               <div class="meta-item">
-                <span class="meta-label">Lines</span>
+                <span class="meta-label">LINES</span>
                 <span class="meta-value"
                   >{{ selectedNode.metadata.startLine }} -
                   {{ selectedNode.metadata.endLine }}</span
                 >
               </div>
               <div class="meta-item">
-                <span class="meta-label">Modifications</span>
-                <span class="meta-value">{{
+                <span class="meta-label">MODIFICATIONS</span>
+                <span class="meta-value highlight">{{
                   selectedNode.metadata.modifyCount
                 }}</span>
               </div>
@@ -158,32 +127,29 @@
 
     <!-- Graph Legend -->
     <div class="graph-legend">
-      <div class="legend-item">
-        <span class="legend-dot" style="background: var(--node-commit)"></span>
-        <span>Commit</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-dot" style="background: var(--node-file)"></span>
-        <span>File</span>
-      </div>
-      <div class="legend-item">
-        <span
-          class="legend-dot"
-          style="background: var(--node-function)"></span>
-        <span>Function</span>
-      </div>
-      <div class="legend-divider"></div>
-      <div class="legend-item">
-        <span class="legend-line"></span>
-        <span>MODIFIES</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-line dashed"></span>
-        <span>CONTAINS</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-line dotted"></span>
-        <span>CALLS</span>
+      <div class="legend-title">LEGEND</div>
+      <div class="legend-items">
+        <div class="legend-item">
+          <span class="legend-dot" style="background: var(--neo-blue)"></span>
+          <span>COMMIT</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: var(--neo-green)"></span>
+          <span>FILE</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: var(--neo-orange)"></span>
+          <span>FUNCTION</span>
+        </div>
+        <div class="legend-divider"></div>
+        <div class="legend-item">
+          <span class="legend-line"></span>
+          <span>MODIFIES</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-line dashed"></span>
+          <span>CONTAINS</span>
+        </div>
       </div>
     </div>
   </div>
@@ -200,9 +166,9 @@ const selectedNode = ref<GraphNode | null>(null);
 const activeFilters = ref(["commit", "file", "function"]);
 
 const nodeTypes = [
-  { id: "commit", label: "Commits", color: "var(--node-commit)" },
-  { id: "file", label: "Files", color: "var(--node-file)" },
-  { id: "function", label: "Functions", color: "var(--node-function)" },
+  { id: "commit", label: "COMMITS", color: "var(--neo-blue)" },
+  { id: "file", label: "FILES", color: "var(--neo-green)" },
+  { id: "function", label: "FUNCTIONS", color: "var(--neo-orange)" },
 ];
 
 let cy: any = null;
@@ -215,6 +181,19 @@ function toggleFilter(type: string) {
     activeFilters.value.push(type);
   }
   updateGraphVisibility();
+}
+
+function getNodeColor(type: string): string {
+  switch (type) {
+    case "commit":
+      return "var(--neo-blue)";
+    case "file":
+      return "var(--neo-green)";
+    case "function":
+      return "var(--neo-orange)";
+    default:
+      return "var(--neo-yellow)";
+  }
 }
 
 function updateGraphVisibility() {
@@ -241,15 +220,12 @@ function formatDate(date: Date | string): string {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 
 async function initGraph() {
   if (!graphContainer.value || !graphStore.hasData) return;
 
-  // Dynamically import Cytoscape
   const cytoscape = (await import("cytoscape")).default;
 
   const nodes = graphStore.graph.nodes.map((node) => ({
@@ -280,27 +256,28 @@ async function initGraph() {
           label: "data(label)",
           "text-valign": "bottom",
           "text-halign": "center",
-          "font-size": "10px",
-          color: "#94a3b8",
+          "font-size": "11px",
+          "font-weight": "bold",
+          "font-family": "Space Grotesk, sans-serif",
+          color: "#000000",
           "text-margin-y": 8,
-          width: 30,
-          height: 30,
+          width: 28,
+          height: 28,
+          "border-width": 3,
+          "border-color": "#000000",
         },
       },
       {
         selector: 'node[type="commit"]',
         style: {
-          "background-color": "#3b82f6",
-          "border-width": 3,
-          "border-color": "#1e40af",
+          "background-color": "#00D4FF",
+          shape: "ellipse",
         },
       },
       {
         selector: 'node[type="file"]',
         style: {
-          "background-color": "#22c55e",
-          "border-width": 3,
-          "border-color": "#15803d",
+          "background-color": "#7CFF6B",
           shape: "rectangle",
           width: 24,
           height: 30,
@@ -309,23 +286,21 @@ async function initGraph() {
       {
         selector: 'node[type="function"]',
         style: {
-          "background-color": "#f59e0b",
-          "border-width": 2,
-          "border-color": "#b45309",
+          "background-color": "#FF9E2C",
           shape: "diamond",
-          width: 20,
-          height: 20,
+          width: 22,
+          height: 22,
         },
       },
       {
         selector: "edge",
         style: {
-          width: 1.5,
-          "line-color": "#475569",
-          "target-arrow-color": "#475569",
+          width: 3,
+          "line-color": "#000000",
+          "target-arrow-color": "#000000",
           "target-arrow-shape": "triangle",
           "curve-style": "bezier",
-          "arrow-scale": 0.8,
+          "arrow-scale": 1,
         },
       },
       {
@@ -338,15 +313,14 @@ async function initGraph() {
         selector: 'edge[type="CALLS"]',
         style: {
           "line-style": "dotted",
-          "line-color": "#f59e0b",
-          "target-arrow-color": "#f59e0b",
+          "line-color": "#FF9E2C",
         },
       },
       {
         selector: ":selected",
         style: {
-          "border-color": "#ffffff",
-          "border-width": 4,
+          "border-width": 5,
+          "border-color": "#FFE500",
         },
       },
     ],
@@ -408,13 +382,15 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .view-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .view-header h1 {
@@ -424,32 +400,37 @@ onUnmounted(() => {
 .view-actions {
   display: flex;
   gap: var(--spacing-md);
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
-  gap: var(--spacing-xs);
-  background: var(--bg-secondary);
-  padding: var(--spacing-xs);
-  border-radius: var(--radius-md);
+  gap: 0;
 }
 
-.filter-group .btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
+.filter-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-sans);
   font-size: 0.75rem;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  font-weight: 700;
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-left: -3px;
 }
 
-.filter-group .btn.active {
-  background: var(--bg-tertiary);
+.filter-btn:first-child {
+  margin-left: 0;
 }
 
-.filter-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.filter-btn:hover {
+  background: var(--filter-color);
+}
+
+.filter-btn.active {
+  background: var(--filter-color);
+  box-shadow: inset 0 0 0 2px var(--neo-black);
 }
 
 /* Graph Container */
@@ -462,9 +443,9 @@ onUnmounted(() => {
 
 .graph-canvas {
   flex: 1;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
+  background: var(--neo-white);
+  border: 4px solid var(--neo-black);
+  box-shadow: 6px 6px 0 var(--neo-black);
   position: relative;
   overflow: hidden;
 }
@@ -478,11 +459,16 @@ onUnmounted(() => {
   justify-content: center;
   gap: var(--spacing-md);
   text-align: center;
-  color: var(--text-muted);
+  padding: var(--spacing-xl);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.3;
 }
 
 .empty-state h3 {
-  color: var(--text-secondary);
+  margin: 0;
 }
 
 /* Details Panel */
@@ -490,6 +476,7 @@ onUnmounted(() => {
   width: 320px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .panel-header {
@@ -497,29 +484,15 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 3px solid var(--neo-black);
 }
 
 .node-type-badge {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+  padding: 4px 12px;
   font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.badge-commit {
-  background: rgba(59, 130, 246, 0.2);
-  color: var(--node-commit);
-}
-
-.badge-file {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--node-file);
-}
-
-.badge-function {
-  background: rgba(245, 158, 11, 0.2);
-  color: var(--node-function);
+  font-weight: 700;
+  border: 2px solid var(--neo-black);
 }
 
 .panel-content {
@@ -528,20 +501,21 @@ onUnmounted(() => {
 }
 
 .node-label {
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-bottom: var(--spacing-lg);
   word-break: break-word;
 }
 
 .metadata-section {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--spacing-md);
 }
 
 .meta-item {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 4px;
 }
 
 .meta-item.full {
@@ -549,13 +523,15 @@ onUnmounted(() => {
 }
 
 .meta-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--text-muted);
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .meta-value {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   word-break: break-all;
 }
 
@@ -565,9 +541,22 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--spacing-lg);
   padding: var(--spacing-md);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  margin-top: var(--spacing-lg);
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
+  box-shadow: 4px 4px 0 var(--neo-black);
+}
+
+.legend-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding-right: var(--spacing-md);
+  border-right: 3px solid var(--neo-black);
+}
+
+.legend-items {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
 }
 
 .legend-item {
@@ -575,44 +564,34 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--spacing-sm);
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--neo-black);
 }
 
 .legend-line {
   width: 24px;
-  height: 2px;
-  background: var(--text-muted);
+  height: 3px;
+  background: var(--neo-black);
 }
 
 .legend-line.dashed {
   background: repeating-linear-gradient(
     90deg,
-    var(--text-muted) 0,
-    var(--text-muted) 4px,
+    var(--neo-black) 0,
+    var(--neo-black) 4px,
     transparent 4px,
     transparent 8px
   );
 }
 
-.legend-line.dotted {
-  background: repeating-linear-gradient(
-    90deg,
-    var(--node-function) 0,
-    var(--node-function) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-}
-
 .legend-divider {
-  width: 1px;
+  width: 3px;
   height: 20px;
-  background: var(--border-color);
+  background: var(--neo-black);
 }
 </style>

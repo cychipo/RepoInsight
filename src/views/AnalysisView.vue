@@ -1,32 +1,25 @@
 <template>
   <div class="analysis-view">
     <div class="view-header">
-      <h1>Code Analysis</h1>
+      <h1>▤ CODE ANALYSIS</h1>
       <button
         v-if="repositoryStore.hasRepository"
         class="btn btn-primary"
         @click="runAnalysis"
         :disabled="isAnalyzing">
-        <svg
-          v-if="!isAnalyzing"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
-          <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
-        </svg>
-        <div v-else class="loader" style="width: 18px; height: 18px"></div>
-        {{ isAnalyzing ? "Analyzing..." : "Run Analysis" }}
+        <span v-if="!isAnalyzing">⚡ RUN ANALYSIS</span>
+        <span v-else class="flex items-center gap-2">
+          <span class="loader" style="width: 18px; height: 18px"></span>
+          ANALYZING...
+        </span>
       </button>
     </div>
 
     <!-- Analysis Progress -->
-    <div v-if="isAnalyzing" class="progress-section card">
+    <div v-if="isAnalyzing" class="progress-section card card-accent-yellow">
       <div class="progress-header">
-        <span>{{ analysisProgress.message }}</span>
-        <span class="text-muted"
+        <span class="font-bold">{{ analysisProgress.message }}</span>
+        <span class="badge"
           >{{ analysisProgress.current }} / {{ analysisProgress.total }}</span
         >
       </div>
@@ -39,124 +32,44 @@
 
     <!-- Empty State -->
     <div v-if="!repositoryStore.hasRepository" class="empty-state card">
-      <svg
-        width="64"
-        height="64"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--text-muted)"
-        stroke-width="1.5">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
-      <h3>No Repository Selected</h3>
+      <div class="empty-icon">▤</div>
+      <h3>NO REPOSITORY SELECTED</h3>
       <p>Select a repository from the home page to view analysis results.</p>
-      <router-link to="/" class="btn btn-primary">Open Repository</router-link>
+      <router-link to="/" class="btn btn-primary"
+        >◆ OPEN REPOSITORY</router-link
+      >
     </div>
 
     <!-- Analysis Results -->
     <template v-else>
       <div class="stats-row">
-        <div class="stat-card card">
-          <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--node-commit)"
-              stroke-width="2">
-              <circle cx="12" cy="12" r="4" />
-              <line x1="1.05" y1="12" x2="7" y2="12" />
-              <line x1="17.01" y1="12" x2="22.96" y2="12" />
-            </svg>
-          </div>
-          <div>
-            <div class="stat-value">{{ graphStore.stats.commits }}</div>
-            <div class="stat-label">Commits</div>
-          </div>
+        <div class="stat-card" style="background: var(--neo-blue)">
+          <div class="stat-value">{{ graphStore.stats.commits }}</div>
+          <div class="stat-label">COMMITS</div>
         </div>
 
-        <div class="stat-card card">
-          <div class="stat-icon" style="background: rgba(34, 197, 94, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--node-file)"
-              stroke-width="2">
-              <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14,2 14,8 20,8" />
-            </svg>
-          </div>
-          <div>
-            <div class="stat-value">{{ graphStore.stats.files }}</div>
-            <div class="stat-label">Files</div>
-          </div>
+        <div class="stat-card" style="background: var(--neo-green)">
+          <div class="stat-value">{{ graphStore.stats.files }}</div>
+          <div class="stat-label">FILES</div>
         </div>
 
-        <div class="stat-card card">
-          <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--node-function)"
-              stroke-width="2">
-              <polyline points="4,17 10,11 4,5" />
-              <line x1="12" y1="19" x2="20" y2="19" />
-            </svg>
-          </div>
-          <div>
-            <div class="stat-value">{{ graphStore.stats.functions }}</div>
-            <div class="stat-label">Functions</div>
-          </div>
+        <div class="stat-card" style="background: var(--neo-orange)">
+          <div class="stat-value">{{ graphStore.stats.functions }}</div>
+          <div class="stat-label">FUNCTIONS</div>
         </div>
 
-        <div class="stat-card card">
-          <div class="stat-icon" style="background: rgba(139, 92, 246, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--accent-secondary)"
-              stroke-width="2">
-              <path
-                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <polyline points="15,3 21,3 21,9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-          </div>
-          <div>
-            <div class="stat-value">{{ graphStore.stats.totalEdges }}</div>
-            <div class="stat-label">Relationships</div>
-          </div>
+        <div class="stat-card" style="background: var(--neo-pink)">
+          <div class="stat-value">{{ graphStore.stats.totalEdges }}</div>
+          <div class="stat-label">RELATIONSHIPS</div>
         </div>
       </div>
 
       <div class="analysis-grid">
         <!-- Hotspot Files -->
-        <div class="card">
+        <div class="card card-accent-pink">
           <div class="card-header">
-            <h3 class="card-title">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--accent-danger)"
-                stroke-width="2">
-                <polygon
-                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-              </svg>
-              Hotspot Files
-            </h3>
-            <span class="badge">Most Modified</span>
+            <h3 class="card-title">★ HOTSPOT FILES</h3>
+            <span class="badge badge-pink">MOST MODIFIED</span>
           </div>
           <div class="list-container">
             <div
@@ -168,37 +81,25 @@
                 <span class="item-name truncate font-mono">{{
                   file.label
                 }}</span>
-                <span class="item-meta text-muted text-xs">{{
+                <span class="item-meta">{{
                   (file.metadata as any).language
                 }}</span>
               </div>
               <span class="badge badge-danger"
-                >{{ (file.metadata as any).modifyCount }} changes</span
+                >{{ (file.metadata as any).modifyCount }}×</span
               >
             </div>
             <div v-if="hotspotFiles.length === 0" class="empty-list">
-              No data available
+              NO DATA AVAILABLE
             </div>
           </div>
         </div>
 
         <!-- Hotspot Functions -->
-        <div class="card">
+        <div class="card card-accent-orange">
           <div class="card-header">
-            <h3 class="card-title">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--node-function)"
-                stroke-width="2">
-                <polyline points="4,17 10,11 4,5" />
-                <line x1="12" y1="19" x2="20" y2="19" />
-              </svg>
-              Hotspot Functions
-            </h3>
-            <span class="badge">Frequently Changed</span>
+            <h3 class="card-title">⚡ HOTSPOT FUNCTIONS</h3>
+            <span class="badge badge-warning">FREQUENTLY CHANGED</span>
           </div>
           <div class="list-container">
             <div
@@ -210,70 +111,40 @@
                 <span class="item-name truncate font-mono">{{
                   (func.metadata as any).name
                 }}</span>
-                <span class="item-meta text-muted text-xs truncate">{{
+                <span class="item-meta truncate">{{
                   (func.metadata as any).filePath
                 }}</span>
               </div>
               <span class="badge badge-warning"
-                >{{ (func.metadata as any).modifyCount }} changes</span
+                >{{ (func.metadata as any).modifyCount }}×</span
               >
             </div>
             <div v-if="hotspotFunctions.length === 0" class="empty-list">
-              No data available
+              NO DATA AVAILABLE
             </div>
           </div>
         </div>
 
         <!-- Co-Change Patterns -->
-        <div class="card full-width">
+        <div class="card card-accent-blue full-width">
           <div class="card-header">
-            <h3 class="card-title">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--accent-primary)"
-                stroke-width="2">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-              Co-Change Patterns
-            </h3>
-            <span class="badge">Files Changed Together</span>
+            <h3 class="card-title">◈ CO-CHANGE PATTERNS</h3>
+            <span class="badge badge-primary">FILES CHANGED TOGETHER</span>
           </div>
           <div class="cochange-grid">
             <div
               v-for="(pattern, index) in coChangePatterns"
               :key="index"
               class="cochange-item">
-              <div class="cochange-files">
-                <code class="truncate">{{
-                  getFileName(pattern.files[0])
-                }}</code>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--text-muted)"
-                  stroke-width="2">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12,5 19,12 12,19" />
-                </svg>
-                <code class="truncate">{{
-                  getFileName(pattern.files[1])
-                }}</code>
-              </div>
-              <span class="badge badge-primary">{{ pattern.count }}x</span>
+              <code class="truncate">{{ getFileName(pattern.files[0]) }}</code>
+              <span class="cochange-arrow">↔</span>
+              <code class="truncate">{{ getFileName(pattern.files[1]) }}</code>
+              <span class="badge badge-primary">{{ pattern.count }}×</span>
             </div>
             <div
               v-if="coChangePatterns.length === 0"
               class="empty-list full-width">
-              No co-change patterns detected
+              NO CO-CHANGE PATTERNS DETECTED
             </div>
           </div>
         </div>
@@ -295,7 +166,7 @@ const analysisProgress = ref({
   stage: "",
   current: 0,
   total: 0,
-  message: "Initializing...",
+  message: "INITIALIZING...",
 });
 
 const progressPercent = computed(() => {
@@ -319,16 +190,17 @@ async function runAnalysis() {
     stage: "commits",
     current: 0,
     total: 0,
-    message: "Starting analysis...",
+    message: "STARTING ANALYSIS...",
   };
 
   try {
-    // Subscribe to progress updates
     window.electronAPI.onAnalysisProgress((progress) => {
-      analysisProgress.value = progress;
+      analysisProgress.value = {
+        ...progress,
+        message: progress.message.toUpperCase(),
+      };
     });
 
-    // Run the analysis
     const result = await window.electronAPI.analyzeRepository(
       repositoryStore.currentRepository
     );
@@ -361,6 +233,8 @@ function getFileName(path: string): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .view-header h1 {
@@ -377,7 +251,7 @@ function getFileName(path: string): string {
 .progress-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
 }
 
 /* Empty State */
@@ -389,11 +263,15 @@ function getFileName(path: string): string {
   gap: var(--spacing-md);
   padding: var(--spacing-2xl);
   text-align: center;
-  color: var(--text-muted);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.3;
 }
 
 .empty-state h3 {
-  color: var(--text-secondary);
+  margin: 0;
 }
 
 /* Stats Row */
@@ -401,21 +279,6 @@ function getFileName(path: string): string {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--spacing-md);
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
 }
 
 /* Analysis Grid */
@@ -429,25 +292,12 @@ function getFileName(path: string): string {
   grid-column: 1 / -1;
 }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex: 1;
-}
-
 /* List Items */
 .list-container {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
 }
 
@@ -456,21 +306,27 @@ function getFileName(path: string): string {
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  border: 3px solid var(--neo-black);
+  transition: all var(--transition-fast);
+}
+
+.list-item:hover {
+  background: var(--neo-yellow);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
 .rank {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  background: var(--neo-black);
+  color: var(--neo-white);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .item-info {
@@ -482,43 +338,56 @@ function getFileName(path: string): string {
 }
 
 .item-name {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.item-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .empty-list {
   padding: var(--spacing-lg);
   text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-muted);
-  font-size: 0.875rem;
 }
 
 /* Co-Change Grid */
 .cochange-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing-sm);
 }
 
 .cochange-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-}
-
-.cochange-files {
-  display: flex;
-  align-items: center;
   gap: var(--spacing-sm);
-  min-width: 0;
-  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-primary);
+  border: 3px solid var(--neo-black);
+  transition: all var(--transition-fast);
 }
 
-.cochange-files code {
-  max-width: 120px;
+.cochange-item:hover {
+  background: var(--neo-yellow);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--neo-black);
+}
+
+.cochange-item code {
+  flex: 1;
+  min-width: 0;
   font-size: 0.75rem;
+  background: var(--neo-white);
+}
+
+.cochange-arrow {
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 </style>

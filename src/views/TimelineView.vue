@@ -1,115 +1,96 @@
 <template>
   <div class="timeline-view">
     <div class="view-header">
-      <h1>Commit Timeline</h1>
-      <div class="view-actions">
-        <div class="search-box">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="input"
-            placeholder="Search commits..." />
-        </div>
+      <h1>◷ COMMIT TIMELINE</h1>
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="input"
+          placeholder="SEARCH COMMITS..." />
       </div>
     </div>
 
     <!-- Empty State -->
     <div v-if="!repositoryStore.hasRepository" class="empty-state card">
-      <svg
-        width="64"
-        height="64"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--text-muted)"
-        stroke-width="1.5">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12,6 12,12 16,14" />
-      </svg>
-      <h3>No Repository Selected</h3>
+      <div class="empty-icon">◷</div>
+      <h3>NO REPOSITORY SELECTED</h3>
       <p>Select a repository from the home page to view the commit timeline.</p>
-      <router-link to="/" class="btn btn-primary">Open Repository</router-link>
+      <router-link to="/" class="btn btn-primary"
+        >◆ OPEN REPOSITORY</router-link
+      >
     </div>
 
-    <!-- Timeline -->
+    <!-- Timeline Content -->
     <div v-else class="timeline-container">
+      <!-- Stats Bar -->
       <div class="timeline-stats">
-        <div class="stat">
-          <span class="stat-value">{{ filteredCommits.length }}</span>
-          <span class="stat-label">Commits</span>
+        <div class="stat-item">
+          <span class="stat-num">{{ filteredCommits.length }}</span>
+          <span class="stat-text">COMMITS</span>
         </div>
-        <div class="stat">
-          <span class="stat-value">{{ uniqueAuthors.length }}</span>
-          <span class="stat-label">Authors</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">{{ uniqueAuthors.length }}</span>
+          <span class="stat-text">AUTHORS</span>
         </div>
-        <div class="stat">
-          <span class="stat-value">{{ dateRange }}</span>
-          <span class="stat-label">Time Range</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">{{ dateRange }}</span>
+          <span class="stat-text">TIME RANGE</span>
         </div>
       </div>
 
-      <div class="timeline">
-        <div
-          v-for="(group, date) in groupedCommits"
-          :key="date"
-          class="timeline-group">
-          <div class="timeline-date">
-            <span>{{ formatGroupDate(date) }}</span>
-            <span class="badge">{{ group.length }} commits</span>
-          </div>
+      <!-- Timeline -->
+      <div class="timeline-scroll">
+        <div class="timeline">
+          <div
+            v-for="(group, date) in groupedCommits"
+            :key="date"
+            class="timeline-group">
+            <div class="timeline-date">
+              <span class="date-text">{{ formatGroupDate(date) }}</span>
+              <span class="badge badge-yellow">{{ group.length }} COMMITS</span>
+            </div>
 
-          <div class="timeline-items">
-            <div
-              v-for="commit in group"
-              :key="commit.hash"
-              class="timeline-item"
-              @click="selectedCommit = commit"
-              :class="{ selected: selectedCommit?.hash === commit.hash }">
-              <div class="timeline-dot"></div>
-              <div class="timeline-content">
-                <div class="commit-header">
-                  <code class="commit-hash">{{ commit.shortHash }}</code>
-                  <span class="commit-time">{{ formatTime(commit.date) }}</span>
-                </div>
-                <p class="commit-message">{{ commit.message }}</p>
-                <div class="commit-meta">
-                  <span class="commit-author">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                    {{ commit.author }}
-                  </span>
-                  <div class="commit-stats">
-                    <span class="stat-add">+{{ commit.insertions }}</span>
-                    <span class="stat-del">-{{ commit.deletions }}</span>
-                    <span class="stat-files"
-                      >{{ commit.filesChanged }} files</span
-                    >
+            <div class="timeline-items">
+              <div
+                v-for="commit in group"
+                :key="commit.hash"
+                class="timeline-item"
+                @click="selectedCommit = commit"
+                :class="{ selected: selectedCommit?.hash === commit.hash }">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="commit-header">
+                    <code class="commit-hash">{{ commit.shortHash }}</code>
+                    <span class="commit-time">{{
+                      formatTime(commit.date)
+                    }}</span>
+                  </div>
+                  <p class="commit-message">{{ commit.message }}</p>
+                  <div class="commit-meta">
+                    <span class="commit-author">
+                      <span class="author-icon">●</span>
+                      {{ commit.author }}
+                    </span>
+                    <div class="commit-stats">
+                      <span class="stat-add">+{{ commit.insertions }}</span>
+                      <span class="stat-del">-{{ commit.deletions }}</span>
+                      <span class="stat-files"
+                        >{{ commit.filesChanged }} files</span
+                      >
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div v-if="filteredCommits.length === 0" class="no-results">
-          <p>No commits found matching "{{ searchQuery }}"</p>
+          <div v-if="filteredCommits.length === 0" class="no-results">
+            <p>NO COMMITS FOUND MATCHING "{{ searchQuery }}"</p>
+          </div>
         </div>
       </div>
     </div>
@@ -117,47 +98,38 @@
     <!-- Commit Details Sidebar -->
     <aside v-if="selectedCommit" class="details-sidebar card">
       <div class="sidebar-header">
-        <h3>Commit Details</h3>
+        <h3>COMMIT DETAILS</h3>
         <button class="btn btn-icon btn-ghost" @click="selectedCommit = null">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          ✕
         </button>
       </div>
 
       <div class="sidebar-content">
         <div class="detail-group">
-          <label>Hash</label>
+          <label>HASH</label>
           <code>{{ selectedCommit.hash }}</code>
         </div>
 
         <div class="detail-group">
-          <label>Author</label>
-          <span>{{ selectedCommit.author }}</span>
+          <label>AUTHOR</label>
+          <span class="font-bold">{{ selectedCommit.author }}</span>
           <span class="text-muted text-sm">{{
             selectedCommit.authorEmail
           }}</span>
         </div>
 
         <div class="detail-group">
-          <label>Date</label>
+          <label>DATE</label>
           <span>{{ formatFullDate(selectedCommit.date) }}</span>
         </div>
 
         <div class="detail-group">
-          <label>Message</label>
-          <p>{{ selectedCommit.message }}</p>
+          <label>MESSAGE</label>
+          <p class="commit-full-message">{{ selectedCommit.message }}</p>
         </div>
 
         <div class="detail-group">
-          <label>Changes</label>
+          <label>CHANGES</label>
           <div class="changes-summary">
             <span class="badge badge-success"
               >+{{ selectedCommit.insertions }}</span
@@ -165,12 +137,12 @@
             <span class="badge badge-danger"
               >-{{ selectedCommit.deletions }}</span
             >
-            <span class="badge">{{ selectedCommit.filesChanged }} files</span>
+            <span class="badge">{{ selectedCommit.filesChanged }} FILES</span>
           </div>
         </div>
 
         <div class="detail-group">
-          <label>Changed Files</label>
+          <label>CHANGED FILES</label>
           <div class="files-list">
             <div v-for="file in commitFiles" :key="file.path" class="file-item">
               <span class="file-status" :class="file.status">
@@ -180,9 +152,9 @@
                 file.path
               }}</span>
             </div>
-            <div v-if="loadingFiles" class="flex items-center gap-2 text-muted">
-              <div class="loader" style="width: 16px; height: 16px"></div>
-              Loading files...
+            <div v-if="loadingFiles" class="flex items-center gap-2">
+              <span class="loader" style="width: 16px; height: 16px"></span>
+              <span class="text-sm">LOADING FILES...</span>
             </div>
           </div>
         </div>
@@ -244,9 +216,9 @@ const dateRange = computed(() => {
     (last.getTime() - first.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  if (diffDays < 30) return `${diffDays} days`;
-  if (diffDays < 365) return `${Math.round(diffDays / 30)} months`;
-  return `${Math.round(diffDays / 365)} years`;
+  if (diffDays < 30) return `${diffDays} DAYS`;
+  if (diffDays < 365) return `${Math.round(diffDays / 30)} MONTHS`;
+  return `${Math.round(diffDays / 365)} YEARS`;
 });
 
 watch(selectedCommit, async (commit) => {
@@ -273,17 +245,19 @@ function formatGroupDate(dateStr: string): string {
   yesterday.setDate(yesterday.getDate() - 1);
 
   if (dateStr === today.toISOString().split("T")[0]) {
-    return "Today";
+    return "TODAY";
   }
   if (dateStr === yesterday.toISOString().split("T")[0]) {
-    return "Yesterday";
+    return "YESTERDAY";
   }
 
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
+  return date
+    .toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    })
+    .toUpperCase();
 }
 
 function formatTime(date: Date | string): string {
@@ -346,25 +320,26 @@ function getStatusIcon(status: string): string {
 .search-box {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-md);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
-.search-box svg {
-  color: var(--text-muted);
+.search-icon {
+  padding: 0 var(--spacing-sm) 0 var(--spacing-md);
+  font-size: 1.2rem;
 }
 
 .search-box .input {
   border: none;
-  background: transparent;
-  padding: var(--spacing-xs);
-  width: 200px;
+  box-shadow: none;
+  width: 220px;
+  font-size: 0.85rem;
 }
 
 .search-box .input:focus {
+  background: var(--neo-yellow);
+  transform: none;
   box-shadow: none;
 }
 
@@ -377,8 +352,12 @@ function getStatusIcon(status: string): string {
   justify-content: center;
   gap: var(--spacing-md);
   text-align: center;
-  color: var(--text-muted);
   margin-top: 60px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.3;
 }
 
 /* Timeline Container */
@@ -392,32 +371,39 @@ function getStatusIcon(status: string): string {
 
 .timeline-stats {
   display: flex;
-  gap: var(--spacing-xl);
-  padding: var(--spacing-md);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--neo-yellow);
+  border: 3px solid var(--neo-black);
+  box-shadow: 4px 4px 0 var(--neo-black);
   margin-bottom: var(--spacing-lg);
 }
 
-.timeline-stats .stat {
+.stat-item {
   display: flex;
   align-items: baseline;
   gap: var(--spacing-sm);
 }
 
-.timeline-stats .stat-value {
-  font-size: 1.25rem;
+.stat-num {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent-primary);
 }
 
-.timeline-stats .stat-label {
-  font-size: 0.875rem;
-  color: var(--text-muted);
+.stat-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.stat-divider {
+  width: 3px;
+  height: 30px;
+  background: var(--neo-black);
 }
 
 /* Timeline */
-.timeline {
+.timeline-scroll {
   flex: 1;
   overflow-y: auto;
   padding-right: var(--spacing-md);
@@ -432,8 +418,11 @@ function getStatusIcon(status: string): string {
   align-items: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
-  font-weight: 600;
-  color: var(--text-secondary);
+}
+
+.date-text {
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 .timeline-items {
@@ -441,36 +430,36 @@ function getStatusIcon(status: string): string {
   flex-direction: column;
   gap: var(--spacing-sm);
   padding-left: var(--spacing-lg);
-  border-left: 2px solid var(--border-color);
+  border-left: 4px solid var(--neo-black);
 }
 
 .timeline-item {
   display: flex;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  margin-left: calc(var(--spacing-md) * -1 - 6px);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  margin-left: calc(var(--spacing-md) * -1 - 8px);
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .timeline-item:hover {
-  border-color: var(--accent-primary);
-  background: var(--bg-tertiary);
+  background: var(--neo-yellow);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
 .timeline-item.selected {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: var(--neo-pink);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
 .timeline-dot {
-  width: 12px;
-  height: 12px;
-  background: var(--accent-primary);
-  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  background: var(--neo-blue);
+  border: 3px solid var(--neo-black);
   margin-top: 4px;
   flex-shrink: 0;
 }
@@ -489,21 +478,21 @@ function getStatusIcon(status: string): string {
 
 .commit-hash {
   font-size: 0.75rem;
-  color: var(--accent-primary);
-  background: rgba(59, 130, 246, 0.1);
-  padding: 0.125rem 0.5rem;
-  border-radius: var(--radius-sm);
+  background: var(--neo-blue);
+  padding: 2px 8px;
+  border: 2px solid var(--neo-black);
 }
 
 .commit-time {
   font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 .commit-message {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   margin-bottom: var(--spacing-sm);
-  color: var(--text-primary);
 }
 
 .commit-meta {
@@ -517,22 +506,27 @@ function getStatusIcon(status: string): string {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.author-icon {
+  color: var(--neo-green);
 }
 
 .commit-stats {
   display: flex;
   gap: var(--spacing-sm);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-family: var(--font-mono);
+  font-weight: 700;
 }
 
 .stat-add {
-  color: var(--accent-success);
+  color: #006600;
 }
 .stat-del {
-  color: var(--accent-danger);
+  color: #cc0000;
 }
 .stat-files {
   color: var(--text-muted);
@@ -541,7 +535,7 @@ function getStatusIcon(status: string): string {
 .no-results {
   padding: var(--spacing-xl);
   text-align: center;
-  color: var(--text-muted);
+  font-weight: 600;
 }
 
 /* Details Sidebar */
@@ -558,7 +552,7 @@ function getStatusIcon(status: string): string {
   align-items: center;
   justify-content: space-between;
   padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 3px solid var(--neo-black);
   margin-bottom: var(--spacing-md);
 }
 
@@ -573,22 +567,29 @@ function getStatusIcon(status: string): string {
 .detail-group {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 4px;
 }
 
 .detail-group label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  text-transform: uppercase;
 }
 
 .detail-group code {
   word-break: break-all;
 }
 
+.commit-full-message {
+  font-weight: 500;
+  line-height: 1.5;
+}
+
 .changes-summary {
   display: flex;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .files-list {
@@ -603,37 +604,34 @@ function getStatusIcon(status: string): string {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-sm);
+  padding: 6px var(--spacing-sm);
+  background: var(--bg-primary);
+  border: 2px solid var(--neo-black);
 }
 
 .file-status {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
+  font-weight: 700;
+  border: 2px solid var(--neo-black);
 }
 
 .file-status.added {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--accent-success);
+  background: var(--neo-green);
 }
 .file-status.modified {
-  background: rgba(245, 158, 11, 0.2);
-  color: var(--accent-warning);
+  background: var(--neo-orange);
 }
 .file-status.deleted {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--accent-danger);
+  background: var(--neo-red);
+  color: var(--neo-white);
 }
 .file-status.renamed {
-  background: rgba(139, 92, 246, 0.2);
-  color: var(--accent-secondary);
+  background: var(--neo-purple);
 }
 
 .file-path {

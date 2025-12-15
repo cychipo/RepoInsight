@@ -1,39 +1,48 @@
 /* =============================================
-   RepoInsight - Modern Dark Theme CSS
+   RepoInsight - Neo-Brutalism Design System
    ============================================= */
 
-/* CSS Variables */
+/* Import Google Fonts - Bold, chunky typography */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* CSS Variables - Neo-Brutalism Palette */
 :root {
-  /* Colors - Dark Theme */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --bg-card: rgba(30, 41, 59, 0.8);
+  /* Core Colors - Vibrant & Bold */
+  --neo-black: #000000;
+  --neo-white: #fffef2;
+  --neo-cream: #fff8e7;
 
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  /* Primary Palette */
+  --neo-yellow: #ffe500;
+  --neo-pink: #ff6b9d;
+  --neo-blue: #00d4ff;
+  --neo-green: #7cff6b;
+  --neo-purple: #c792ff;
+  --neo-orange: #ff9e2c;
+  --neo-red: #ff4757;
 
-  --accent-primary: #3b82f6;
-  --accent-primary-hover: #2563eb;
-  --accent-secondary: #8b5cf6;
-  --accent-success: #22c55e;
-  --accent-warning: #f59e0b;
-  --accent-danger: #ef4444;
+  /* Background variations */
+  --bg-primary: var(--neo-cream);
+  --bg-secondary: var(--neo-white);
+  --bg-accent: var(--neo-yellow);
 
-  --border-color: rgba(148, 163, 184, 0.1);
-  --border-color-light: rgba(148, 163, 184, 0.2);
+  /* Text */
+  --text-primary: var(--neo-black);
+  --text-secondary: #333333;
+  --text-muted: #666666;
 
   /* Node colors for graph */
-  --node-commit: #3b82f6;
-  --node-file: #22c55e;
-  --node-function: #f59e0b;
+  --node-commit: var(--neo-blue);
+  --node-file: var(--neo-green);
+  --node-function: var(--neo-orange);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+  /* Neo-Brutalism Borders & Shadows */
+  --border-width: 3px;
+  --border-color: var(--neo-black);
+  --shadow-offset: 4px;
+  --shadow-brutal: var(--shadow-offset) var(--shadow-offset) 0 var(--neo-black);
+  --shadow-brutal-lg: 6px 6px 0 var(--neo-black);
+  --shadow-brutal-hover: 6px 6px 0 var(--neo-black);
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -43,22 +52,18 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
 
-  /* Border radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-full: 9999px;
+  /* Border radius - mostly 0 or very small for brutalism */
+  --radius-sm: 0;
+  --radius-md: 4px;
+  --radius-lg: 8px;
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
+  --transition-fast: 100ms ease;
+  --transition-normal: 200ms ease;
 
   /* Font */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-sans: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 /* Reset */
@@ -75,12 +80,11 @@ html,
 body {
   height: 100%;
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--text-primary);
   background: var(--bg-primary);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
@@ -89,113 +93,135 @@ body {
   flex-direction: column;
 }
 
-/* Typography */
+/* Typography - Bold & Chunky */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-weight: 600;
-  line-height: 1.3;
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 h2 {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
 }
 h3 {
   font-size: 1.25rem;
 }
 h4 {
-  font-size: 1.125rem;
+  font-size: 1.1rem;
 }
 
 p {
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 a {
-  color: var(--accent-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  transition: all var(--transition-fast);
 }
 
 a:hover {
-  color: var(--accent-primary-hover);
+  background: var(--neo-yellow);
 }
 
 code,
 pre {
   font-family: var(--font-mono);
-  font-size: 0.875em;
+  font-size: 0.9em;
+  font-weight: 500;
 }
 
 code {
-  background: var(--bg-tertiary);
-  padding: 0.125rem 0.375rem;
-  border-radius: var(--radius-sm);
-  color: var(--accent-secondary);
+  background: var(--neo-yellow);
+  padding: 0.15rem 0.4rem;
+  border: 2px solid var(--neo-black);
 }
 
-/* Buttons */
+/* ==========================================
+   Neo-Brutalism Buttons
+   ========================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
-  font-size: 0.875rem;
-  font-weight: 500;
-  border: none;
-  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--neo-white);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
+  box-shadow: var(--shadow-brutal);
   text-decoration: none;
 }
 
+.btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--neo-black);
+}
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: linear-gradient(
-    135deg,
-    var(--accent-primary),
-    var(--accent-secondary)
-  );
-  color: white;
-  box-shadow: var(--shadow-md);
+  background: var(--neo-yellow);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  background: var(--neo-pink);
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color-light);
+  background: var(--neo-white);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-secondary);
-  border-color: var(--accent-primary);
+  background: var(--neo-blue);
+}
+
+.btn-danger {
+  background: var(--neo-red);
+  color: var(--neo-white);
+}
+
+.btn-success {
+  background: var(--neo-green);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--text-secondary);
+  border: 2px solid var(--neo-black);
+  box-shadow: none;
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--neo-yellow);
+  box-shadow: var(--shadow-brutal);
 }
 
 .btn-lg {
@@ -207,22 +233,22 @@ code {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  border-radius: var(--radius-md);
 }
 
-/* Cards */
+/* ==========================================
+   Neo-Brutalism Cards
+   ========================================== */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  background: var(--neo-white);
+  border: var(--border-width) solid var(--border-color);
   padding: var(--spacing-lg);
-  backdrop-filter: blur(10px);
-  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-brutal);
+  transition: all var(--transition-fast);
 }
 
 .card:hover {
-  border-color: var(--border-color-light);
-  box-shadow: var(--shadow-lg);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal-lg);
 }
 
 .card-header {
@@ -231,123 +257,158 @@ code {
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 3px solid var(--neo-black);
 }
 
 .card-title {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
-/* Inputs */
+.card-accent-yellow {
+  border-left: 8px solid var(--neo-yellow);
+}
+.card-accent-pink {
+  border-left: 8px solid var(--neo-pink);
+}
+.card-accent-blue {
+  border-left: 8px solid var(--neo-blue);
+}
+.card-accent-green {
+  border-left: 8px solid var(--neo-green);
+}
+.card-accent-orange {
+  border-left: 8px solid var(--neo-orange);
+}
+
+/* ==========================================
+   Neo-Brutalism Inputs
+   ========================================== */
 .input {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  background: var(--neo-white);
+  border: var(--border-width) solid var(--border-color);
   outline: none;
   transition: all var(--transition-fast);
+  box-shadow: var(--shadow-brutal);
 }
 
 .input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: var(--neo-yellow);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal-hover);
 }
 
 .input::placeholder {
   color: var(--text-muted);
+  font-weight: 500;
 }
 
-/* Badges */
+/* ==========================================
+   Neo-Brutalism Badges
+   ========================================== */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.5rem;
+  padding: 0.2rem 0.6rem;
   font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: var(--radius-full);
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 2px solid var(--neo-black);
+  background: var(--neo-white);
 }
 
 .badge-primary {
-  background: rgba(59, 130, 246, 0.2);
-  color: var(--accent-primary);
+  background: var(--neo-blue);
 }
 
 .badge-success {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--accent-success);
+  background: var(--neo-green);
 }
 
 .badge-warning {
-  background: rgba(245, 158, 11, 0.2);
-  color: var(--accent-warning);
+  background: var(--neo-orange);
 }
 
 .badge-danger {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--accent-danger);
+  background: var(--neo-red);
+  color: var(--neo-white);
 }
 
-/* Stats */
+.badge-yellow {
+  background: var(--neo-yellow);
+}
+
+.badge-pink {
+  background: var(--neo-pink);
+}
+
+/* ==========================================
+   Stats
+   ========================================== */
 .stat-card {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
+  box-shadow: var(--shadow-brutal);
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(
-    135deg,
-    var(--text-primary),
-    var(--accent-primary)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  line-height: 1;
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
-/* Progress */
+/* ==========================================
+   Progress Bar
+   ========================================== */
 .progress {
   width: 100%;
-  height: 0.5rem;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
+  height: 1.5rem;
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
   overflow: hidden;
 }
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--accent-primary),
-    var(--accent-secondary)
+  background: repeating-linear-gradient(
+    45deg,
+    var(--neo-yellow),
+    var(--neo-yellow) 10px,
+    var(--neo-black) 10px,
+    var(--neo-black) 20px
   );
-  border-radius: var(--radius-full);
   transition: width var(--transition-normal);
 }
 
-/* Loader */
+/* ==========================================
+   Loader
+   ========================================== */
 .loader {
   width: 2rem;
   height: 2rem;
-  border: 3px solid var(--bg-tertiary);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  border: 4px solid var(--neo-black);
+  border-top-color: var(--neo-yellow);
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -356,42 +417,43 @@ code {
   }
 }
 
-/* Scrollbar */
+/* ==========================================
+   Scrollbar - Neo-Brutalism Style
+   ========================================== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
+  border-left: 3px solid var(--neo-black);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
+  background: var(--neo-yellow);
+  border: 3px solid var(--neo-black);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--neo-pink);
 }
 
-/* Utilities */
+/* ==========================================
+   Utilities
+   ========================================== */
 .flex {
   display: flex;
 }
-
 .flex-col {
   flex-direction: column;
 }
-
 .items-center {
   align-items: center;
 }
-
 .justify-center {
   justify-content: center;
 }
-
 .justify-between {
   justify-content: space-between;
 }
@@ -438,13 +500,33 @@ code {
   font-weight: 700;
 }
 
+.uppercase {
+  text-transform: uppercase;
+}
+
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Animations */
+/* Highlight text with marker effect */
+.highlight {
+  background: linear-gradient(180deg, transparent 50%, var(--neo-yellow) 50%);
+  padding: 0 4px;
+}
+
+.highlight-pink {
+  background: linear-gradient(180deg, transparent 50%, var(--neo-pink) 50%);
+}
+
+.highlight-blue {
+  background: linear-gradient(180deg, transparent 50%, var(--neo-blue) 50%);
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -460,16 +542,33 @@ code {
   animation: fadeIn 0.3s ease forwards;
 }
 
-@keyframes pulse {
+@keyframes bounce {
   0%,
   100% {
-    opacity: 1;
+    transform: translateY(0);
   }
   50% {
-    opacity: 0.5;
+    transform: translateY(-10px);
   }
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-bounce {
+  animation: bounce 0.5s ease infinite;
+}
+
+/* Staggered animation for lists */
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+.stagger-5 {
+  animation-delay: 0.5s;
 }

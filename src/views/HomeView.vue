@@ -1,16 +1,17 @@
 <template>
   <div class="home-view">
-    <!-- Hero Section -->
+    <!-- Hero Section - Neo-Brutalism Style -->
     <section class="hero">
       <div class="hero-content animate-fadeIn">
+        <div class="hero-badge">GIT ANALYSIS TOOL</div>
         <h1 class="hero-title">
-          Explore Your
-          <span class="gradient-text">Codebase</span>
+          EXPLORE YOUR
+          <span class="title-highlight">CODEBASE</span>
         </h1>
         <p class="hero-description">
           Analyze Git repositories and visualize code relationships as beautiful
           knowledge graphs. Discover hotspots, understand dependencies, and gain
-          insights into your codebase evolution.
+          deep insights.
         </p>
 
         <div class="hero-actions">
@@ -18,98 +19,25 @@
             class="btn btn-primary btn-lg"
             @click="handleSelectRepository"
             :disabled="repositoryStore.isLoading">
-            <svg
-              v-if="!repositoryStore.isLoading"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2">
-              <path
-                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              <line x1="12" y1="11" x2="12" y2="17" />
-              <line x1="9" y1="14" x2="15" y2="14" />
-            </svg>
-            <div v-else class="loader" style="width: 20px; height: 20px"></div>
-            {{ repositoryStore.isLoading ? "Loading..." : "Open Repository" }}
+            <span v-if="!repositoryStore.isLoading">◆ OPEN REPOSITORY</span>
+            <span v-else class="flex items-center gap-2">
+              <span class="loader" style="width: 20px; height: 20px"></span>
+              LOADING...
+            </span>
           </button>
         </div>
 
         <p v-if="repositoryStore.error" class="error-message">
-          {{ repositoryStore.error }}
+          ⚠ {{ repositoryStore.error }}
         </p>
       </div>
 
-      <!-- Decorative Graph Animation -->
-      <div class="hero-visual">
-        <div class="graph-decoration">
-          <div
-            class="node node-commit"
-            style="--delay: 0s; --x: 50%; --y: 20%"></div>
-          <div
-            class="node node-file"
-            style="--delay: 0.2s; --x: 25%; --y: 50%"></div>
-          <div
-            class="node node-file"
-            style="--delay: 0.4s; --x: 75%; --y: 50%"></div>
-          <div
-            class="node node-function"
-            style="--delay: 0.6s; --x: 15%; --y: 80%"></div>
-          <div
-            class="node node-function"
-            style="--delay: 0.8s; --x: 40%; --y: 80%"></div>
-          <div
-            class="node node-function"
-            style="--delay: 1s; --x: 65%; --y: 80%"></div>
-          <div
-            class="node node-function"
-            style="--delay: 1.2s; --x: 85%; --y: 80%"></div>
-          <svg class="connections" viewBox="0 0 400 300">
-            <line
-              x1="200"
-              y1="60"
-              x2="100"
-              y2="150"
-              class="edge"
-              style="--delay: 0.3s" />
-            <line
-              x1="200"
-              y1="60"
-              x2="300"
-              y2="150"
-              class="edge"
-              style="--delay: 0.5s" />
-            <line
-              x1="100"
-              y1="150"
-              x2="60"
-              y2="240"
-              class="edge"
-              style="--delay: 0.7s" />
-            <line
-              x1="100"
-              y1="150"
-              x2="160"
-              y2="240"
-              class="edge"
-              style="--delay: 0.9s" />
-            <line
-              x1="300"
-              y1="150"
-              x2="260"
-              y2="240"
-              class="edge"
-              style="--delay: 1.1s" />
-            <line
-              x1="300"
-              y1="150"
-              x2="340"
-              y2="240"
-              class="edge"
-              style="--delay: 1.3s" />
-          </svg>
-        </div>
+      <!-- Decorative Elements -->
+      <div class="hero-decoration">
+        <div class="deco-box box-1"></div>
+        <div class="deco-box box-2"></div>
+        <div class="deco-box box-3"></div>
+        <div class="deco-circle"></div>
       </div>
     </section>
 
@@ -118,121 +46,72 @@
       v-if="repositoryStore.currentRepository"
       class="repo-section animate-fadeIn">
       <div class="section-header">
-        <h2>Current Repository</h2>
+        <h2>▤ CURRENT REPOSITORY</h2>
         <button class="btn btn-ghost" @click="repositoryStore.clearRepository">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-          Close
+          ✕ CLOSE
         </button>
       </div>
 
-      <div class="repo-card card">
+      <div class="repo-card card card-accent-yellow">
         <div class="repo-header">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2">
-            <path
-              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-          </svg>
+          <div class="repo-icon">◈</div>
           <div>
             <h3>{{ repositoryStore.repositoryName }}</h3>
-            <p class="text-muted text-sm font-mono">
-              {{ repositoryStore.currentRepository }}
-            </p>
+            <code class="repo-path">{{
+              repositoryStore.currentRepository
+            }}</code>
           </div>
         </div>
 
         <div class="stats-grid">
-          <div class="stat-card">
+          <div class="stat-card" style="background: var(--neo-blue)">
             <div class="stat-value">{{ repositoryStore.totalCommits }}</div>
-            <div class="stat-label">Commits</div>
+            <div class="stat-label">COMMITS</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" style="background: var(--neo-green)">
             <div class="stat-value">
               {{ repositoryStore.repositoryInfo?.totalContributors || "-" }}
             </div>
-            <div class="stat-label">Contributors</div>
+            <div class="stat-label">CONTRIBUTORS</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" style="background: var(--neo-pink)">
             <div class="stat-value">{{ repositoryStore.currentBranch }}</div>
-            <div class="stat-label">Current Branch</div>
+            <div class="stat-label">BRANCH</div>
           </div>
         </div>
 
         <div class="repo-actions">
           <router-link to="/graph" class="btn btn-primary">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-            View Knowledge Graph
+            ◈ VIEW GRAPH
           </router-link>
           <router-link to="/analysis" class="btn btn-secondary">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2">
-              <line x1="18" y1="20" x2="18" y2="10" />
-              <line x1="12" y1="20" x2="12" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-            View Analysis
+            ▤ ANALYSIS
+          </router-link>
+          <router-link to="/timeline" class="btn btn-secondary">
+            ◷ TIMELINE
           </router-link>
         </div>
       </div>
 
       <!-- Recent Commits Preview -->
-      <div class="commits-preview card">
+      <div class="commits-preview card card-accent-blue">
         <div class="card-header">
-          <h3 class="card-title">Recent Commits</h3>
-          <router-link to="/timeline" class="btn btn-ghost text-sm">
-            View All
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12,5 19,12 12,19" />
-            </svg>
+          <h3 class="card-title">◷ RECENT COMMITS</h3>
+          <router-link to="/timeline" class="btn btn-ghost">
+            VIEW ALL →
           </router-link>
         </div>
 
         <div class="commits-list">
           <div
-            v-for="commit in recentCommits"
+            v-for="(commit, index) in recentCommits"
             :key="commit.hash"
-            class="commit-item">
-            <div class="commit-hash font-mono">{{ commit.shortHash }}</div>
+            class="commit-item"
+            :class="['stagger-' + (index + 1)]">
+            <div class="commit-hash">{{ commit.shortHash }}</div>
             <div class="commit-info">
               <div class="commit-message truncate">{{ commit.message }}</div>
-              <div class="commit-meta text-muted text-xs">
+              <div class="commit-meta">
                 <span>{{ commit.author }}</span>
                 <span>•</span>
                 <span>{{ formatDate(commit.date) }}</span>
@@ -249,84 +128,42 @@
 
     <!-- Features Section (when no repo) -->
     <section v-else class="features-section">
-      <h2 class="section-title">What You Can Do</h2>
+      <h2 class="section-title">▤ WHAT YOU CAN DO</h2>
       <div class="features-grid">
-        <div class="feature-card card">
-          <div class="feature-icon" style="background: rgba(59, 130, 246, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--accent-primary)"
-              stroke-width="2">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-          </div>
-          <h3>Knowledge Graph</h3>
+        <div class="feature-card card card-accent-blue">
+          <div class="feature-icon" style="background: var(--neo-blue)">◈</div>
+          <h3>KNOWLEDGE GRAPH</h3>
           <p>
             Visualize relationships between commits, files, and functions as an
             interactive graph.
           </p>
         </div>
 
-        <div class="feature-card card">
-          <div class="feature-icon" style="background: rgba(34, 197, 94, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--accent-success)"
-              stroke-width="2">
-              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
-            </svg>
+        <div class="feature-card card card-accent-green">
+          <div class="feature-icon" style="background: var(--neo-green)">
+            ⚡
           </div>
-          <h3>Code Analysis</h3>
+          <h3>CODE ANALYSIS</h3>
           <p>
             Static analysis to extract functions, classes, and understand call
             relationships.
           </p>
         </div>
 
-        <div class="feature-card card">
-          <div class="feature-icon" style="background: rgba(245, 158, 11, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--accent-warning)"
-              stroke-width="2">
-              <polygon
-                points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-            </svg>
+        <div class="feature-card card card-accent-orange">
+          <div class="feature-icon" style="background: var(--neo-orange)">
+            ★
           </div>
-          <h3>Hotspot Detection</h3>
+          <h3>HOTSPOT DETECTION</h3>
           <p>
             Identify frequently modified files and functions that may need
             attention.
           </p>
         </div>
 
-        <div class="feature-card card">
-          <div class="feature-icon" style="background: rgba(139, 92, 246, 0.2)">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--accent-secondary)"
-              stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12,6 12,12 16,14" />
-            </svg>
-          </div>
-          <h3>Timeline View</h3>
+        <div class="feature-card card card-accent-pink">
+          <div class="feature-icon" style="background: var(--neo-pink)">◷</div>
+          <h3>TIMELINE VIEW</h3>
           <p>
             Explore how your codebase evolved over time with commit timeline
             visualization.
@@ -389,32 +226,39 @@ function formatDate(date: Date | string): string {
 }
 
 .hero-content {
-  max-width: 500px;
+  max-width: 550px;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  margin-bottom: var(--spacing-md);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--neo-black);
+  color: var(--neo-white);
+  letter-spacing: 0.1em;
 }
 
 .hero-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  line-height: 1.1;
+  font-size: 3rem;
+  line-height: 1;
   margin-bottom: var(--spacing-lg);
 }
 
-.gradient-text {
-  background: linear-gradient(
-    135deg,
-    var(--accent-primary),
-    var(--accent-secondary)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.title-highlight {
+  display: block;
+  background: var(--neo-yellow);
+  padding: 8px 16px;
+  border: 4px solid var(--neo-black);
+  box-shadow: 6px 6px 0 var(--neo-black);
+  margin-top: var(--spacing-sm);
 }
 
 .hero-description {
-  font-size: 1rem;
-  color: var(--text-secondary);
+  font-size: 1.1rem;
   margin-bottom: var(--spacing-xl);
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 .hero-actions {
@@ -424,77 +268,72 @@ function formatDate(date: Date | string): string {
 
 .error-message {
   margin-top: var(--spacing-md);
-  color: var(--accent-danger);
-  font-size: 0.875rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--neo-red);
+  color: var(--neo-white);
+  font-weight: 700;
+  border: 3px solid var(--neo-black);
 }
 
-/* Hero Visual - Animated Graph */
-.hero-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.graph-decoration {
+/* Decorative Elements */
+.hero-decoration {
   position: relative;
-  width: 400px;
-  height: 300px;
+  height: 350px;
 }
 
-.node {
+.deco-box {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  border: 4px solid var(--neo-black);
+  box-shadow: 6px 6px 0 var(--neo-black);
+}
+
+.box-1 {
+  width: 180px;
+  height: 180px;
+  background: var(--neo-yellow);
+  top: 20px;
+  left: 20%;
+  animation: float 3s ease-in-out infinite;
+}
+
+.box-2 {
+  width: 120px;
+  height: 120px;
+  background: var(--neo-pink);
+  top: 100px;
+  right: 15%;
+  animation: float 3s ease-in-out infinite 0.5s;
+}
+
+.box-3 {
+  width: 80px;
+  height: 80px;
+  background: var(--neo-blue);
+  bottom: 40px;
+  left: 30%;
+  animation: float 3s ease-in-out infinite 1s;
+}
+
+.deco-circle {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border: 4px solid var(--neo-black);
   border-radius: 50%;
-  left: var(--x);
-  top: var(--y);
-  transform: translate(-50%, -50%) scale(0);
-  animation: nodeAppear 0.5s ease forwards;
-  animation-delay: var(--delay);
-  box-shadow: 0 0 20px currentColor;
+  background: var(--neo-green);
+  box-shadow: 6px 6px 0 var(--neo-black);
+  bottom: 80px;
+  right: 25%;
+  animation: float 3s ease-in-out infinite 1.5s;
 }
 
-.node-commit {
-  background: var(--node-commit);
-  color: var(--node-commit);
-}
-.node-file {
-  background: var(--node-file);
-  color: var(--node-file);
-}
-.node-function {
-  background: var(--node-function);
-  color: var(--node-function);
-  width: 18px;
-  height: 18px;
-}
-
-@keyframes nodeAppear {
-  to {
-    transform: translate(-50%, -50%) scale(1);
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-}
-
-.connections {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
-
-.edge {
-  stroke: var(--text-muted);
-  stroke-width: 1.5;
-  stroke-dasharray: 200;
-  stroke-dashoffset: 200;
-  animation: drawLine 0.5s ease forwards;
-  animation-delay: var(--delay);
-}
-
-@keyframes drawLine {
-  to {
-    stroke-dashoffset: 0;
+  50% {
+    transform: translateY(-15px);
   }
 }
 
@@ -523,12 +362,29 @@ function formatDate(date: Date | string): string {
   gap: var(--spacing-md);
 }
 
-.repo-header svg {
-  color: var(--accent-primary);
+.repo-icon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neo-yellow);
+  border: 3px solid var(--neo-black);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
 .repo-header h3 {
+  font-size: 1.5rem;
   margin: 0;
+}
+
+.repo-path {
+  font-size: 0.8rem;
+  background: var(--neo-black);
+  color: var(--neo-yellow);
+  padding: 4px 8px;
+  border: none;
 }
 
 .stats-grid {
@@ -540,6 +396,7 @@ function formatDate(date: Date | string): string {
 .repo-actions {
   display: flex;
   gap: var(--spacing-md);
+  flex-wrap: wrap;
 }
 
 /* Commits Preview */
@@ -554,21 +411,24 @@ function formatDate(date: Date | string): string {
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  border: 3px solid var(--neo-black);
   transition: all var(--transition-fast);
 }
 
 .commit-item:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--neo-yellow);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
 .commit-hash {
+  font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--accent-primary);
-  background: rgba(59, 130, 246, 0.1);
-  padding: 0.125rem 0.5rem;
-  border-radius: var(--radius-sm);
+  font-weight: 700;
+  background: var(--neo-blue);
+  padding: 4px 8px;
+  border: 2px solid var(--neo-black);
 }
 
 .commit-info {
@@ -577,27 +437,31 @@ function formatDate(date: Date | string): string {
 }
 
 .commit-message {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .commit-meta {
   display: flex;
   gap: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .commit-stats {
   display: flex;
   gap: var(--spacing-sm);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-family: var(--font-mono);
+  font-weight: 700;
 }
 
 .stat-add {
-  color: var(--accent-success);
+  color: #006600;
 }
 .stat-del {
-  color: var(--accent-danger);
+  color: #cc0000;
 }
 
 /* Features Section */
@@ -612,7 +476,7 @@ function formatDate(date: Date | string): string {
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-lg);
 }
 
@@ -620,8 +484,6 @@ function formatDate(date: Date | string): string {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  text-align: center;
-  align-items: center;
 }
 
 .feature-icon {
@@ -630,7 +492,9 @@ function formatDate(date: Date | string): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-lg);
+  font-size: 1.5rem;
+  border: 3px solid var(--neo-black);
+  box-shadow: 4px 4px 0 var(--neo-black);
 }
 
 .feature-card h3 {
@@ -639,7 +503,7 @@ function formatDate(date: Date | string): string {
 }
 
 .feature-card p {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   margin: 0;
 }
 </style>
