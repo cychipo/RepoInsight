@@ -598,6 +598,34 @@ function registerGitHandlers() {
     }
   );
   electron.ipcMain.handle(
+    "git:getAheadBehind",
+    async (_, repoPath) => {
+      try {
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+        const branch = currentBranch.trim();
+        try {
+          await runGitCommand(repoPath, `rev-parse --verify origin/${branch}`);
+        } catch {
+          return { ahead: 0, behind: 0 };
+        }
+        const output = await runGitCommand(
+          repoPath,
+          `rev-list --left-right --count ${branch}...origin/${branch}`
+        );
+        const parts = output.trim().split(/\s+/);
+        const ahead = parseInt(parts[0] || "0", 10);
+        const behind = parseInt(parts[1] || "0", 10);
+        return { ahead, behind };
+      } catch (error) {
+        console.error("Failed to get ahead/behind:", error);
+        return { ahead: 0, behind: 0 };
+      }
+    }
+  );
+  electron.ipcMain.handle(
     "git:rebase",
     async (_, repoPath) => {
       let stashed = false;

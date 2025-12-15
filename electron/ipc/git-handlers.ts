@@ -835,6 +835,44 @@ export function registerGitHandlers() {
     }
   );
 
+  // Get ahead/behind count relative to remote
+  ipcMain.handle(
+    "git:getAheadBehind",
+    async (_, repoPath: string): Promise<{ ahead: number; behind: number }> => {
+      try {
+        // Get current branch
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+        const branch = currentBranch.trim();
+
+        // Check if remote tracking branch exists
+        try {
+          await runGitCommand(repoPath, `rev-parse --verify origin/${branch}`);
+        } catch {
+          // No remote tracking branch, return 0
+          return { ahead: 0, behind: 0 };
+        }
+
+        // Get ahead/behind count
+        const output = await runGitCommand(
+          repoPath,
+          `rev-list --left-right --count ${branch}...origin/${branch}`
+        );
+
+        const parts = output.trim().split(/\s+/);
+        const ahead = parseInt(parts[0] || "0", 10);
+        const behind = parseInt(parts[1] || "0", 10);
+
+        return { ahead, behind };
+      } catch (error) {
+        console.error("Failed to get ahead/behind:", error);
+        return { ahead: 0, behind: 0 };
+      }
+    }
+  );
+
   // Rebase code from origin (Pull --rebase)
   ipcMain.handle(
     "git:rebase",
