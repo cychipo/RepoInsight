@@ -128,5 +128,5 @@ MIT License - xem file [LICENSE](LICENSE) để biết thêm chi tiết.
 ---
 
 <p align="center">
-  Made with ❤️ by RepoInsight Team
+  Made with ❤️ by Tobi
 </p>
