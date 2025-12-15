@@ -1,1 +1,51 @@
-"use strict";const i=require("electron");i.contextBridge.exposeInMainWorld("electronAPI",{selectRepository:()=>i.ipcRenderer.invoke("dialog:selectRepository"),selectDirectory:()=>i.ipcRenderer.invoke("dialog:selectDirectory"),validateRepository:e=>i.ipcRenderer.invoke("git:validateRepository",e),getCommits:(e,r,n,t)=>i.ipcRenderer.invoke("git:getCommits",e,r,n,t),getFileChanges:(e,r)=>i.ipcRenderer.invoke("git:getFileChanges",e,r),getRepositoryInfo:e=>i.ipcRenderer.invoke("git:getRepositoryInfo",e),getGitGraph:(e,r)=>i.ipcRenderer.invoke("git:getGitGraph",e,r),cloneRepository:(e,r)=>i.ipcRenderer.invoke("git:cloneRepository",e,r),getBranches:e=>i.ipcRenderer.invoke("git:getBranches",e),getStatus:e=>i.ipcRenderer.invoke("git:getStatus",e),checkoutBranch:(e,r)=>i.ipcRenderer.invoke("git:checkoutBranch",e,r),rebase:e=>i.ipcRenderer.invoke("git:rebase",e),stageFile:(e,r)=>i.ipcRenderer.invoke("git:stageFile",e,r),unstageFile:(e,r)=>i.ipcRenderer.invoke("git:unstageFile",e,r),stageAll:e=>i.ipcRenderer.invoke("git:stageAll",e),unstageAll:e=>i.ipcRenderer.invoke("git:unstageAll",e),discardFile:(e,r)=>i.ipcRenderer.invoke("git:discardFile",e,r),discardAll:e=>i.ipcRenderer.invoke("git:discardAll",e),commit:(e,r)=>i.ipcRenderer.invoke("git:commit",e,r),push:e=>i.ipcRenderer.invoke("git:push",e),getStagedDiff:e=>i.ipcRenderer.invoke("git:getStagedDiff",e),getUnstagedDiff:e=>i.ipcRenderer.invoke("git:getUnstagedDiff",e),getFileDiff:(e,r,n)=>i.ipcRenderer.invoke("git:getFileDiff",e,r,n),getAheadBehind:e=>i.ipcRenderer.invoke("git:getAheadBehind",e),analyzeRepository:e=>i.ipcRenderer.invoke("analysis:analyzeRepository",e),getAnalysisProgress:()=>i.ipcRenderer.invoke("analysis:getProgress"),onAnalysisProgress:e=>{i.ipcRenderer.on("analysis:progress",(r,n)=>e(n))},removeAnalysisProgressListener:()=>{i.ipcRenderer.removeAllListeners("analysis:progress")},onCloneProgress:e=>{i.ipcRenderer.on("clone-progress",(r,n)=>e(n))},removeCloneProgressListener:()=>{i.ipcRenderer.removeAllListeners("clone-progress")},getGitConfig:(e,r)=>i.ipcRenderer.invoke("settings:getGitConfig",e,r),setGitConfig:(e,r,n)=>i.ipcRenderer.invoke("settings:setGitConfig",e,r,n),getApiKey:()=>i.ipcRenderer.invoke("settings:getApiKey"),setApiKey:e=>i.ipcRenderer.invoke("settings:setApiKey",e)});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("electronAPI", {
+  // Repository operations
+  selectRepository: () => electron.ipcRenderer.invoke("dialog:selectRepository"),
+  selectDirectory: () => electron.ipcRenderer.invoke("dialog:selectDirectory"),
+  validateRepository: (path) => electron.ipcRenderer.invoke("git:validateRepository", path),
+  // Git operations
+  getCommits: (repoPath, limit, offset, branch) => electron.ipcRenderer.invoke("git:getCommits", repoPath, limit, offset, branch),
+  getFileChanges: (repoPath, commitHash) => electron.ipcRenderer.invoke("git:getFileChanges", repoPath, commitHash),
+  getRepositoryInfo: (repoPath) => electron.ipcRenderer.invoke("git:getRepositoryInfo", repoPath),
+  getGitGraph: (repoPath, limit) => electron.ipcRenderer.invoke("git:getGitGraph", repoPath, limit),
+  cloneRepository: (url, destPath) => electron.ipcRenderer.invoke("git:cloneRepository", url, destPath),
+  getBranches: (repoPath) => electron.ipcRenderer.invoke("git:getBranches", repoPath),
+  getStatus: (repoPath) => electron.ipcRenderer.invoke("git:getStatus", repoPath),
+  checkoutBranch: (repoPath, branchName) => electron.ipcRenderer.invoke("git:checkoutBranch", repoPath, branchName),
+  rebase: (repoPath) => electron.ipcRenderer.invoke("git:rebase", repoPath),
+  stageFile: (repoPath, filePath) => electron.ipcRenderer.invoke("git:stageFile", repoPath, filePath),
+  unstageFile: (repoPath, filePath) => electron.ipcRenderer.invoke("git:unstageFile", repoPath, filePath),
+  stageAll: (repoPath) => electron.ipcRenderer.invoke("git:stageAll", repoPath),
+  unstageAll: (repoPath) => electron.ipcRenderer.invoke("git:unstageAll", repoPath),
+  discardFile: (repoPath, filePath) => electron.ipcRenderer.invoke("git:discardFile", repoPath, filePath),
+  discardAll: (repoPath) => electron.ipcRenderer.invoke("git:discardAll", repoPath),
+  commit: (repoPath, message) => electron.ipcRenderer.invoke("git:commit", repoPath, message),
+  push: (repoPath) => electron.ipcRenderer.invoke("git:push", repoPath),
+  getStagedDiff: (repoPath) => electron.ipcRenderer.invoke("git:getStagedDiff", repoPath),
+  getUnstagedDiff: (repoPath) => electron.ipcRenderer.invoke("git:getUnstagedDiff", repoPath),
+  getFileDiff: (repoPath, filePath, staged) => electron.ipcRenderer.invoke("git:getFileDiff", repoPath, filePath, staged),
+  getAheadBehind: (repoPath) => electron.ipcRenderer.invoke("git:getAheadBehind", repoPath),
+  // Analysis operations
+  analyzeRepository: (repoPath) => electron.ipcRenderer.invoke("analysis:analyzeRepository", repoPath),
+  getAnalysisProgress: () => electron.ipcRenderer.invoke("analysis:getProgress"),
+  // Event listeners for progress updates
+  onAnalysisProgress: (callback) => {
+    electron.ipcRenderer.on("analysis:progress", (_, progress) => callback(progress));
+  },
+  removeAnalysisProgressListener: () => {
+    electron.ipcRenderer.removeAllListeners("analysis:progress");
+  },
+  onCloneProgress: (callback) => {
+    electron.ipcRenderer.on("clone-progress", (_, progress) => callback(progress));
+  },
+  removeCloneProgressListener: () => {
+    electron.ipcRenderer.removeAllListeners("clone-progress");
+  },
+  // Settings
+  getGitConfig: (key, repoPath) => electron.ipcRenderer.invoke("settings:getGitConfig", key, repoPath),
+  setGitConfig: (key, value, repoPath) => electron.ipcRenderer.invoke("settings:setGitConfig", key, value, repoPath),
+  getApiKey: () => electron.ipcRenderer.invoke("settings:getApiKey"),
+  setApiKey: (key) => electron.ipcRenderer.invoke("settings:setApiKey", key)
+});
