@@ -131,16 +131,27 @@ export function registerGitHandlers() {
     }
   );
 
-  // Get commits
+  // Get commits with pagination support
   ipcMain.handle(
     "git:getCommits",
-    async (_, repoPath: string, limit = 500): Promise<Commit[]> => {
+    async (
+      _,
+      repoPath: string,
+      limit = 10,
+      offset = 0,
+      branch?: string
+    ): Promise<Commit[]> => {
       try {
         // Format: hash|short_hash|author|email|date|message
         const format = "%H|%h|%an|%ae|%aI|%s";
+        // If branch specified, get commits for that branch, otherwise current HEAD
+        const branchArg = branch ? branch : "HEAD";
+        // limit=0 means no limit (get all commits)
+        const limitArg = limit > 0 ? `-n ${limit}` : "";
+        const skipArg = offset > 0 ? `--skip=${offset}` : "";
         const output = await runGitCommand(
           repoPath,
-          `log --format="${format}" --shortstat -n ${limit}`
+          `log ${branchArg} --format="${format}" --shortstat ${limitArg} ${skipArg}`
         );
 
         const commits: Commit[] = [];
@@ -548,9 +559,11 @@ export function registerGitHandlers() {
         // Get commit data with parent hashes and decorations
         // Format: hash|short_hash|parent_hashes|author|email|date|decorations|message
         const format = "%H|%h|%P|%an|%ae|%aI|%D|%s";
+        // limit=0 means no limit
+        const limitArg = limit > 0 ? `-n ${limit}` : "";
         const output = await runGitCommand(
           repoPath,
-          `log --all --format="${format}" -n ${limit}`
+          `log --all --format="${format}" ${limitArg}`
         );
 
         const commits: GitGraphCommit[] = [];
@@ -687,6 +700,136 @@ export function registerGitHandlers() {
       });
     }
   );
+
+  // Get list of branches
+  ipcMain.handle(
+    "git:getBranches",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{ name: string; isCurrent: boolean; isRemote: boolean }[]> => {
+      try {
+        // Get all branches with current marker
+        const output = await runGitCommand(
+          repoPath,
+          "branch -a --format='%(refname:short)|%(HEAD)'"
+        );
+
+        const branches: {
+          name: string;
+          isCurrent: boolean;
+          isRemote: boolean;
+        }[] = [];
+        const lines = output.split("\n").filter((l) => l.trim());
+
+        for (const line of lines) {
+          const [name, head] = line.replace(/'/g, "").split("|");
+          if (!name || name.includes("HEAD")) continue;
+
+          const isRemote =
+            name.startsWith("remotes/") || name.startsWith("origin/");
+          const cleanName = name.replace(/^remotes\//, "");
+
+          // Avoid duplicates (same branch local and remote)
+          if (!branches.find((b) => b.name === cleanName)) {
+            branches.push({
+              name: cleanName,
+              isCurrent: head === "*",
+              isRemote,
+            });
+          }
+        }
+
+        return branches;
+      } catch (error) {
+        console.error("Failed to get branches:", error);
+        throw error;
+      }
+    }
+  );
+
+  // Get uncommitted changes (git status)
+  ipcMain.handle(
+    "git:getStatus",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{ path: string; status: string; staged: boolean }[]> => {
+      try {
+        // git status --porcelain gives us: XY filename
+        // X = staged status, Y = unstaged status
+        const output = await runGitCommand(repoPath, "status --porcelain");
+
+        const changes: { path: string; status: string; staged: boolean }[] = [];
+        const lines = output.split("\n").filter((l) => l.trim());
+
+        for (const line of lines) {
+          if (line.length < 3) continue;
+
+          const stagedStatus = line[0];
+          const unstagedStatus = line[1];
+          const filePath = line.substring(3).trim();
+
+          // If there's a staged change
+          if (stagedStatus !== " " && stagedStatus !== "?") {
+            changes.push({
+              path: filePath,
+              status: getStatusLabel(stagedStatus),
+              staged: true,
+            });
+          }
+          // If there's an unstaged change
+          if (unstagedStatus !== " ") {
+            changes.push({
+              path: filePath,
+              status: getStatusLabel(unstagedStatus),
+              staged: false,
+            });
+          }
+        }
+
+        return changes;
+      } catch (error) {
+        console.error("Failed to get status:", error);
+        throw error;
+      }
+    }
+  );
+
+  // Switch to a different branch
+  ipcMain.handle(
+    "git:checkoutBranch",
+    async (
+      _,
+      repoPath: string,
+      branchName: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        await runGitCommand(repoPath, `checkout ${branchName}`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to switch branch",
+        };
+      }
+    }
+  );
+}
+
+function getStatusLabel(code: string): string {
+  const statusMap: Record<string, string> = {
+    M: "modified",
+    A: "added",
+    D: "deleted",
+    R: "renamed",
+    C: "copied",
+    U: "unmerged",
+    "?": "untracked",
+    "!": "ignored",
+  };
+  return statusMap[code] || "unknown";
 }
 
 // Helper function to get language from file extension

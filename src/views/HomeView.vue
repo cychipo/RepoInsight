@@ -130,6 +130,37 @@
           </div>
         </div>
       </div>
+
+      <!-- Uncommitted Changes -->
+      <div
+        v-if="repositoryStore.gitStatus.length > 0"
+        class="uncommitted-changes card card-accent-orange">
+        <div class="card-header">
+          <h3 class="card-title">⚠ UNCOMMITTED CHANGES</h3>
+          <span class="changes-count"
+            >{{ repositoryStore.gitStatus.length }} FILES</span
+          >
+        </div>
+
+        <div class="changes-list">
+          <div
+            v-for="file in repositoryStore.gitStatus.slice(0, 10)"
+            :key="file.path + file.staged"
+            class="change-item"
+            :class="{ staged: file.staged }">
+            <span class="change-status" :class="file.status">{{
+              file.status.toUpperCase().slice(0, 1)
+            }}</span>
+            <span class="change-path truncate font-mono">{{ file.path }}</span>
+            <span class="change-staged" v-if="file.staged">STAGED</span>
+          </div>
+          <div
+            v-if="repositoryStore.gitStatus.length > 10"
+            class="more-changes">
+            +{{ repositoryStore.gitStatus.length - 10 }} more files...
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Features Section (when no repo) -->
@@ -262,7 +293,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRepositoryStore } from "@/stores/repository";
 import type { CloneProgress } from "@/types";
 
@@ -283,6 +314,22 @@ const cloneProgress = ref<CloneProgress>({
 const recentCommits = computed(() => {
   return repositoryStore.commits.slice(0, 5);
 });
+
+// Load git status when component mounts or repository changes
+onMounted(async () => {
+  if (repositoryStore.hasRepository) {
+    await repositoryStore.loadGitStatus();
+  }
+});
+
+watch(
+  () => repositoryStore.currentRepository,
+  async () => {
+    if (repositoryStore.hasRepository) {
+      await repositoryStore.loadGitStatus();
+    }
+  }
+);
 
 async function handleSelectRepository() {
   await repositoryStore.selectRepository();
@@ -327,9 +374,17 @@ async function handleClone() {
     );
 
     if (result.success) {
-      // Clone successful, load the repository
-      closeCloneModal();
+      // Clone successful - close modal first, then load repository
+      isCloning.value = false;
+      window.electronAPI.removeCloneProgressListener();
+      showCloneModal.value = false;
+      cloneUrl.value = "";
+      cloneDestPath.value = "";
+      cloneError.value = "";
+      cloneProgress.value = { stage: "cloning", percent: 0, message: "" };
+
       await repositoryStore.setRepository(result.path);
+      return;
     } else {
       cloneError.value = result.error || "Clone failed";
     }
@@ -790,5 +845,86 @@ function formatDate(date: Date | string): string {
   font-size: 0.75rem;
   font-family: var(--font-mono);
   word-break: break-all;
+}
+
+/* Uncommitted Changes */
+.uncommitted-changes {
+  margin-top: var(--spacing-md);
+}
+
+.changes-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--neo-orange);
+  padding: 4px 8px;
+  border: 2px solid var(--neo-black);
+}
+
+.changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.change-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-primary);
+  border: 2px solid transparent;
+}
+
+.change-item.staged {
+  border-color: var(--neo-green);
+  background: rgba(0, 255, 128, 0.1);
+}
+
+.change-status {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 2px solid var(--neo-black);
+}
+
+.change-status.modified {
+  background: var(--neo-orange);
+}
+
+.change-status.added {
+  background: var(--neo-green);
+}
+
+.change-status.deleted {
+  background: var(--neo-red);
+  color: white;
+}
+
+.change-status.untracked {
+  background: var(--neo-blue);
+}
+
+.change-path {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+}
+
+.change-staged {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--neo-green);
+  padding: 2px 6px;
+  border: 2px solid var(--neo-black);
+}
+
+.more-changes {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: var(--spacing-xs);
 }
 </style>

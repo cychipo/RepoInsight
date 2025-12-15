@@ -13,7 +13,12 @@ export interface ElectronAPI {
   validateRepository: (path: string) => Promise<boolean>;
 
   // Git operations
-  getCommits: (repoPath: string, limit?: number) => Promise<Commit[]>;
+  getCommits: (
+    repoPath: string,
+    limit?: number,
+    offset?: number,
+    branch?: string
+  ) => Promise<Commit[]>;
   getFileChanges: (
     repoPath: string,
     commitHash: string
@@ -24,6 +29,12 @@ export interface ElectronAPI {
     url: string,
     destPath: string
   ) => Promise<{ success: boolean; path: string; error?: string }>;
+  getBranches: (repoPath: string) => Promise<Branch[]>;
+  getStatus: (repoPath: string) => Promise<GitStatusEntry[]>;
+  checkoutBranch: (
+    repoPath: string,
+    branchName: string
+  ) => Promise<{ success: boolean; error?: string }>;
 
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
@@ -34,6 +45,20 @@ export interface ElectronAPI {
   removeAnalysisProgressListener: () => void;
   onCloneProgress: (callback: (progress: CloneProgress) => void) => void;
   removeCloneProgressListener: () => void;
+}
+
+// Branch type
+export interface Branch {
+  name: string;
+  isCurrent: boolean;
+  isRemote: boolean;
+}
+
+// Git status entry type
+export interface GitStatusEntry {
+  path: string;
+  status: string;
+  staged: boolean;
 }
 
 // Clone progress type

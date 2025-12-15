@@ -2,6 +2,24 @@
   <div class="timeline-view">
     <div class="view-header">
       <h1>◷ COMMIT TIMELINE</h1>
+
+      <!-- Branch Selector -->
+      <div class="branch-selector">
+        <label>BRANCH:</label>
+        <select
+          v-model="selectedBranch"
+          @change="onBranchChange"
+          class="select-input"
+          :disabled="repositoryStore.isLoading">
+          <option
+            v-for="branch in repositoryStore.branches"
+            :key="branch.name"
+            :value="branch.name">
+            {{ branch.name }}{{ branch.isCurrent ? " ✓" : "" }}
+          </option>
+        </select>
+      </div>
+
       <div class="search-box">
         <span class="search-icon">⌕</span>
         <input
@@ -92,6 +110,23 @@
             <p>NO COMMITS FOUND MATCHING "{{ searchQuery }}"</p>
           </div>
         </div>
+
+        <!-- Load More Button -->
+        <div
+          v-if="repositoryStore.hasMoreCommits && !searchQuery"
+          class="load-more-container">
+          <button
+            class="btn btn-secondary btn-lg"
+            @click="handleLoadMore"
+            :disabled="repositoryStore.isLoading">
+            <span v-if="repositoryStore.isLoading">LOADING...</span>
+            <span v-else>↓ LOAD MORE COMMITS</span>
+          </button>
+        </div>
+
+        <div v-if="!repositoryStore.hasMoreCommits" class="end-of-commits">
+          <span>— END OF COMMITS —</span>
+        </div>
       </div>
     </div>
 
@@ -164,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRepositoryStore } from "@/stores/repository";
 import type { Commit, FileChange } from "@/types";
 
@@ -173,6 +208,28 @@ const searchQuery = ref("");
 const selectedCommit = ref<Commit | null>(null);
 const commitFiles = ref<FileChange[]>([]);
 const loadingFiles = ref(false);
+const selectedBranch = ref("");
+
+// Load branches when component mounts
+onMounted(async () => {
+  if (repositoryStore.hasRepository) {
+    await repositoryStore.loadBranches();
+    selectedBranch.value =
+      repositoryStore.selectedBranch || repositoryStore.currentBranch;
+  }
+});
+
+// Handle branch change
+async function onBranchChange() {
+  if (selectedBranch.value) {
+    await repositoryStore.loadCommitsForBranch(selectedBranch.value);
+  }
+}
+
+// Handle load more
+async function handleLoadMore() {
+  await repositoryStore.loadMoreCommits();
+}
 
 const filteredCommits = computed(() => {
   if (!searchQuery.value) return repositoryStore.commits;
@@ -317,6 +374,33 @@ function getStatusIcon(status: string): string {
 
 .view-header h1 {
   font-size: 1.5rem;
+}
+
+.branch-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.branch-selector label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.select-input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 3px solid var(--neo-black);
+  background: var(--neo-white);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.select-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .search-box {
@@ -639,5 +723,20 @@ function getStatusIcon(status: string): string {
 .file-path {
   flex: 1;
   min-width: 0;
+}
+
+/* Load More */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.end-of-commits {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 </style>

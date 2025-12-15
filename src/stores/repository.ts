@@ -1,14 +1,26 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import type { Commit, RepositoryInfo, FileChange } from "@/types";
+import type {
+  Commit,
+  RepositoryInfo,
+  FileChange,
+  Branch,
+  GitStatusEntry,
+} from "@/types";
 import { useGraphStore } from "./graph";
+
+const COMMITS_PER_PAGE = 10;
 
 export const useRepositoryStore = defineStore("repository", () => {
   // State
   const currentRepository = ref<string | null>(null);
   const repositoryInfo = ref<RepositoryInfo | null>(null);
   const commits = ref<Commit[]>([]);
+  const branches = ref<Branch[]>([]);
+  const selectedBranch = ref<string>("");
+  const gitStatus = ref<GitStatusEntry[]>([]);
   const isLoading = ref(false);
+  const hasMoreCommits = ref(true);
   const error = ref<string | null>(null);
   const analysisProgress = ref({
     stage: "",
@@ -72,11 +84,21 @@ export const useRepositoryStore = defineStore("repository", () => {
         currentRepository.value
       );
 
-      // Get commits
-      commits.value = await window.electronAPI.getCommits(
+      // Load initial commits (10 at a time for timeline)
+      commits.value = [];
+      const newCommits = await window.electronAPI.getCommits(
         currentRepository.value,
-        500
+        COMMITS_PER_PAGE,
+        0
       );
+      commits.value = newCommits;
+      hasMoreCommits.value = newCommits.length === COMMITS_PER_PAGE;
+
+      // Load branches
+      await loadBranches();
+
+      // Load git status
+      await loadGitStatus();
 
       // Auto-trigger analysis to populate graph data
       await runAnalysis();
@@ -150,10 +172,83 @@ export const useRepositoryStore = defineStore("repository", () => {
     }
   }
 
+  async function loadBranches(): Promise<void> {
+    if (!currentRepository.value) return;
+    try {
+      branches.value = await window.electronAPI.getBranches(
+        currentRepository.value
+      );
+      // Set selected branch to current branch if not set
+      if (!selectedBranch.value) {
+        const current = branches.value.find((b) => b.isCurrent);
+        selectedBranch.value = current?.name || "main";
+      }
+    } catch (e) {
+      console.error("Failed to load branches:", e);
+    }
+  }
+
+  async function loadGitStatus(): Promise<void> {
+    if (!currentRepository.value) return;
+    try {
+      gitStatus.value = await window.electronAPI.getStatus(
+        currentRepository.value
+      );
+    } catch (e) {
+      console.error("Failed to load git status:", e);
+    }
+  }
+
+  async function loadCommitsForBranch(branchName: string): Promise<void> {
+    if (!currentRepository.value) return;
+    try {
+      isLoading.value = true;
+      selectedBranch.value = branchName;
+      const newCommits = await window.electronAPI.getCommits(
+        currentRepository.value,
+        COMMITS_PER_PAGE,
+        0,
+        branchName
+      );
+      commits.value = newCommits;
+      hasMoreCommits.value = newCommits.length === COMMITS_PER_PAGE;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : "Failed to load commits";
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function loadMoreCommits(): Promise<void> {
+    if (!currentRepository.value || !hasMoreCommits.value || isLoading.value)
+      return;
+    try {
+      isLoading.value = true;
+      const offset = commits.value.length;
+      const branch = selectedBranch.value || undefined;
+      const newCommits = await window.electronAPI.getCommits(
+        currentRepository.value,
+        COMMITS_PER_PAGE,
+        offset,
+        branch
+      );
+      commits.value = [...commits.value, ...newCommits];
+      hasMoreCommits.value = newCommits.length === COMMITS_PER_PAGE;
+    } catch (e) {
+      console.error("Failed to load more commits:", e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   function clearRepository() {
     currentRepository.value = null;
     repositoryInfo.value = null;
     commits.value = [];
+    branches.value = [];
+    selectedBranch.value = "";
+    gitStatus.value = [];
+    hasMoreCommits.value = true;
     error.value = null;
   }
 
@@ -162,7 +257,11 @@ export const useRepositoryStore = defineStore("repository", () => {
     currentRepository,
     repositoryInfo,
     commits,
+    branches,
+    selectedBranch,
+    gitStatus,
     isLoading,
+    hasMoreCommits,
     error,
     analysisProgress,
 
@@ -176,6 +275,10 @@ export const useRepositoryStore = defineStore("repository", () => {
     selectRepository,
     setRepository,
     loadRepositoryData,
+    loadBranches,
+    loadGitStatus,
+    loadCommitsForBranch,
+    loadMoreCommits,
     runAnalysis,
     getFileChanges,
     setAnalysisProgress,
