@@ -25,6 +25,12 @@
               LOADING...
             </span>
           </button>
+          <button
+            class="btn btn-secondary btn-lg"
+            @click="showCloneModal = true"
+            :disabled="isCloning">
+            ↓ CLONE FROM URL
+          </button>
         </div>
 
         <p v-if="repositoryStore.error" class="error-message">
@@ -171,14 +177,108 @@
         </div>
       </div>
     </section>
+
+    <!-- Clone Modal -->
+    <div
+      v-if="showCloneModal"
+      class="modal-overlay"
+      @click.self="closeCloneModal">
+      <div class="modal card">
+        <div class="modal-header">
+          <h2>↓ CLONE FROM URL</h2>
+          <button class="btn btn-icon btn-ghost" @click="closeCloneModal">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label>GIT REPOSITORY URL</label>
+            <input
+              type="text"
+              v-model="cloneUrl"
+              placeholder="https://github.com/user/repo.git"
+              class="input"
+              :disabled="isCloning" />
+          </div>
+
+          <div class="form-group">
+            <label>DESTINATION FOLDER</label>
+            <div class="input-with-btn">
+              <input
+                type="text"
+                v-model="cloneDestPath"
+                placeholder="Select destination folder..."
+                class="input"
+                readonly
+                :disabled="isCloning" />
+              <button
+                class="btn btn-secondary"
+                @click="selectCloneDestination"
+                :disabled="isCloning">
+                BROWSE
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div v-if="isCloning" class="clone-progress">
+            <div class="progress-header">
+              <span class="progress-stage">{{
+                cloneProgress.stage.toUpperCase()
+              }}</span>
+              <span class="progress-percent">{{ cloneProgress.percent }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                :style="{ width: cloneProgress.percent + '%' }"></div>
+            </div>
+            <p class="progress-message">{{ cloneProgress.message }}</p>
+          </div>
+
+          <!-- Error -->
+          <p v-if="cloneError" class="error-message">⚠ {{ cloneError }}</p>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            class="btn btn-ghost"
+            @click="closeCloneModal"
+            :disabled="isCloning">
+            CANCEL
+          </button>
+          <button
+            class="btn btn-primary"
+            @click="handleClone"
+            :disabled="!cloneUrl || !cloneDestPath || isCloning">
+            <span v-if="isCloning">CLONING...</span>
+            <span v-else>↓ START CLONE</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, onUnmounted } from "vue";
 import { useRepositoryStore } from "@/stores/repository";
+import type { CloneProgress } from "@/types";
 
 const repositoryStore = useRepositoryStore();
+
+// Clone state
+const showCloneModal = ref(false);
+const cloneUrl = ref("");
+const cloneDestPath = ref("");
+const isCloning = ref(false);
+const cloneError = ref("");
+const cloneProgress = ref<CloneProgress>({
+  stage: "cloning",
+  percent: 0,
+  message: "",
+});
 
 const recentCommits = computed(() => {
   return repositoryStore.commits.slice(0, 5);
@@ -187,6 +287,63 @@ const recentCommits = computed(() => {
 async function handleSelectRepository() {
   await repositoryStore.selectRepository();
 }
+
+function closeCloneModal() {
+  if (isCloning.value) return;
+  showCloneModal.value = false;
+  cloneUrl.value = "";
+  cloneDestPath.value = "";
+  cloneError.value = "";
+  cloneProgress.value = { stage: "cloning", percent: 0, message: "" };
+}
+
+async function selectCloneDestination() {
+  const result = await window.electronAPI.selectDirectory();
+  if (result.success && result.path) {
+    cloneDestPath.value = result.path;
+  }
+}
+
+async function handleClone() {
+  if (!cloneUrl.value || !cloneDestPath.value) return;
+
+  isCloning.value = true;
+  cloneError.value = "";
+  cloneProgress.value = {
+    stage: "cloning",
+    percent: 0,
+    message: "Starting clone...",
+  };
+
+  // Set up progress listener
+  window.electronAPI.onCloneProgress((progress: CloneProgress) => {
+    cloneProgress.value = progress;
+  });
+
+  try {
+    const result = await window.electronAPI.cloneRepository(
+      cloneUrl.value,
+      cloneDestPath.value
+    );
+
+    if (result.success) {
+      // Clone successful, load the repository
+      closeCloneModal();
+      await repositoryStore.setRepository(result.path);
+    } else {
+      cloneError.value = result.error || "Clone failed";
+    }
+  } catch (e) {
+    cloneError.value = e instanceof Error ? e.message : "Clone failed";
+  } finally {
+    isCloning.value = false;
+    window.electronAPI.removeCloneProgressListener();
+  }
+}
+
+onUnmounted(() => {
+  window.electronAPI.removeCloneProgressListener();
+});
 
 function formatDate(date: Date | string): string {
   const d = new Date(date);
@@ -505,5 +662,133 @@ function formatDate(date: Date | string): string {
 .feature-card p {
   font-size: 0.9rem;
   margin: 0;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-lg);
+}
+
+.modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 3px solid var(--neo-black);
+  margin-bottom: var(--spacing-lg);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 3px solid var(--neo-black);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  border: 3px solid var(--neo-black);
+  background: var(--neo-white);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.input:focus {
+  box-shadow: 4px 4px 0 var(--neo-black);
+}
+
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 0;
+}
+
+.input-with-btn .input {
+  flex: 1;
+  border-right: none;
+}
+
+.input-with-btn .btn {
+  border-left: 3px solid var(--neo-black);
+}
+
+/* Clone Progress */
+.clone-progress {
+  padding: var(--spacing-md);
+  background: var(--neo-blue);
+  border: 3px solid var(--neo-black);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.progress-bar {
+  height: 12px;
+  background: var(--neo-white);
+  border: 2px solid var(--neo-black);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--neo-green);
+  transition: width 0.3s ease;
+}
+
+.progress-message {
+  margin-top: var(--spacing-sm);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  word-break: break-all;
 }
 </style>

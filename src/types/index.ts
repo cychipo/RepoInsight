@@ -6,6 +6,10 @@ export interface ElectronAPI {
     path: string | null;
     error?: string;
   }>;
+  selectDirectory: () => Promise<{
+    success: boolean;
+    path: string | null;
+  }>;
   validateRepository: (path: string) => Promise<boolean>;
 
   // Git operations
@@ -16,6 +20,10 @@ export interface ElectronAPI {
   ) => Promise<FileChange[]>;
   getRepositoryInfo: (repoPath: string) => Promise<RepositoryInfo>;
   getGitGraph: (repoPath: string, limit?: number) => Promise<GitGraphCommit[]>;
+  cloneRepository: (
+    url: string,
+    destPath: string
+  ) => Promise<{ success: boolean; path: string; error?: string }>;
 
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
@@ -24,6 +32,15 @@ export interface ElectronAPI {
   // Event listeners
   onAnalysisProgress: (callback: (progress: AnalysisProgress) => void) => void;
   removeAnalysisProgressListener: () => void;
+  onCloneProgress: (callback: (progress: CloneProgress) => void) => void;
+  removeCloneProgressListener: () => void;
+}
+
+// Clone progress type
+export interface CloneProgress {
+  stage: string;
+  percent: number;
+  message: string;
 }
 
 // Git types

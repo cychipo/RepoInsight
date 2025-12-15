@@ -85,3 +85,17 @@ ipcMain.handle("dialog:selectRepository", async () => {
       : "Selected folder is not a Git repository (.git folder not found)",
   };
 });
+
+// Select directory for clone destination
+ipcMain.handle("dialog:selectDirectory", async () => {
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    properties: ["openDirectory", "createDirectory"],
+    title: "Select Clone Destination",
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, path: null };
+  }
+
+  return { success: true, path: result.filePaths[0] };
+});

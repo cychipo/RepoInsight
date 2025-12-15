@@ -134,6 +134,22 @@ export const useRepositoryStore = defineStore("repository", () => {
     analysisProgress.value = progress;
   }
 
+  async function setRepository(path: string): Promise<boolean> {
+    try {
+      isLoading.value = true;
+      error.value = null;
+      currentRepository.value = path;
+      await loadRepositoryData();
+      return true;
+    } catch (e) {
+      error.value =
+        e instanceof Error ? e.message : "Failed to load repository";
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   function clearRepository() {
     currentRepository.value = null;
     repositoryInfo.value = null;
@@ -158,6 +174,7 @@ export const useRepositoryStore = defineStore("repository", () => {
 
     // Actions
     selectRepository,
+    setRepository,
     loadRepositoryData,
     runAnalysis,
     getFileChanges,

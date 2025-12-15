@@ -5,6 +5,7 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("electronAPI", {
   // Repository operations
   selectRepository: () => ipcRenderer.invoke("dialog:selectRepository"),
+  selectDirectory: () => ipcRenderer.invoke("dialog:selectDirectory"),
   validateRepository: (path: string) =>
     ipcRenderer.invoke("git:validateRepository", path),
 
@@ -17,6 +18,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("git:getRepositoryInfo", repoPath),
   getGitGraph: (repoPath: string, limit?: number) =>
     ipcRenderer.invoke("git:getGitGraph", repoPath, limit),
+  cloneRepository: (url: string, destPath: string) =>
+    ipcRenderer.invoke("git:cloneRepository", url, destPath),
 
   // Analysis operations
   analyzeRepository: (repoPath: string) =>
@@ -29,5 +32,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   removeAnalysisProgressListener: () => {
     ipcRenderer.removeAllListeners("analysis:progress");
+  },
+  onCloneProgress: (callback: (progress: any) => void) => {
+    ipcRenderer.on("clone-progress", (_, progress) => callback(progress));
+  },
+  removeCloneProgressListener: () => {
+    ipcRenderer.removeAllListeners("clone-progress");
   },
 });
