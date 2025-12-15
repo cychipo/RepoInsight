@@ -29,7 +29,7 @@
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': false }">
           <span class="text-lg">◆</span>
-          <span>HOME</span>
+          <span>TRANG CHỦ</span>
         </router-link>
 
         <router-link
@@ -38,7 +38,7 @@
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
           <span class="text-lg">◈</span>
-          <span>GRAPH</span>
+          <span>BIỂU ĐỒ</span>
         </router-link>
 
         <router-link
@@ -47,7 +47,7 @@
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
           <span class="text-lg">▤</span>
-          <span>ANALYSIS</span>
+          <span>PHÂN TÍCH</span>
         </router-link>
 
         <router-link
@@ -56,7 +56,7 @@
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
           <span class="text-lg">◷</span>
-          <span>TIMELINE</span>
+          <span>DÒNG THỜI GIAN</span>
         </router-link>
 
         <router-link
@@ -65,7 +65,7 @@
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
           <span class="text-lg">⚡</span>
-          <span>CHANGES</span>
+          <span>THAY ĐỔI</span>
         </router-link>
       </nav>
 
@@ -76,7 +76,7 @@
         <div class="flex flex-col gap-1">
           <div
             class="inline-block px-2 py-0.5 text-[0.65rem] font-bold bg-neo-black text-neo-white self-start">
-            ACTIVE REPO
+            KHO HOẠT ĐỘNG
           </div>
           <div class="font-bold text-sm truncate">
             {{ repositoryStore.repositoryName }}

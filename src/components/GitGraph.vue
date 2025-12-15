@@ -2,64 +2,73 @@
   <div class="git-graph">
     <div v-if="loading" class="loading-state">
       <span class="loader"></span>
-      <span>LOADING GIT GRAPH...</span>
+      <span>ĐANG TẢI BIỂU ĐỒ GIT...</span>
     </div>
 
     <div v-else-if="commits.length === 0" class="empty-state">
       <div class="empty-icon">◈</div>
-      <h3>NO GIT DATA</h3>
-      <p>Select a repository to view the git graph.</p>
+      <h3>KHÔNG CÓ DỮ LIỆU GIT</h3>
+      <p>Chọn một kho chứa để xem biểu đồ git.</p>
     </div>
 
-    <div v-else class="graph-container" ref="scrollContainer">
-      <div class="graph-list">
+    <div
+      v-else
+      class="graph-container"
+      ref="scrollContainer"
+      @scroll="onScroll">
+      <div class="graph-list" :style="{ height: totalHeight + 'px' }">
         <div
-          v-for="(commit, index) in commits"
+          v-for="(commit, i) in visibleCommits"
           :key="commit.hash"
           class="graph-row"
+          :style="{
+            transform: `translateY(${getCommitTop(startIndex + i)}px)`,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0
+          }"
           :class="{ selected: selectedCommit?.hash === commit.hash }"
           @click="selectedCommit = commit">
           <!-- Branch visualization lane -->
           <div class="lane-container">
-            <svg class="lane-svg" :width="laneWidth" height="48">
+            <svg class="lane-svg" :width="laneWidth" :height="rowHeight">
               <!-- Draw branch lines -->
               <template
-                v-for="(lane, laneIndex) in getLanes(index)"
+                v-for="(lane, laneIndex) in getLanes(startIndex + i)"
                 :key="laneIndex">
-                <!-- Vertical line through -->
-                <line
+                <!-- Vertical line through (From 0 to 48) -->
+                <path
                   v-if="lane.through"
-                  :x1="getLaneX(lane.column)"
-                  y1="0"
-                  :x2="getLaneX(lane.column)"
-                  y2="48"
+                  :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(lane.column)} ${rowHeight}`"
                   :stroke="lane.color"
-                  stroke-width="2" />
-                <!-- Line from parent (above) to this commit -->
-                <line
+                  stroke-width="2"
+                  fill="none" />
+
+                <!-- Line from above (From 0 to 24) -->
+                <!-- Always vertical as per logic -->
+                <path
                   v-if="lane.fromAbove && lane.toColumn !== undefined"
-                  :x1="getLaneX(lane.column)"
-                  y1="0"
-                  :x2="getLaneX(lane.toColumn)"
-                  y2="24"
+                  :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(lane.toColumn)} ${rowHeight / 2}`"
                   :stroke="lane.color"
-                  stroke-width="2" />
-                <!-- Line from this commit to child (below) -->
-                <line
+                  stroke-width="2"
+                  fill="none" />
+
+                <!-- Line to below (From 24 to 48) -->
+                <!-- Can be vertical or curved (merge/branch) -->
+                <path
                   v-if="lane.toBelow && lane.toColumn !== undefined"
-                  :x1="getLaneX(lane.column)"
-                  y1="24"
-                  :x2="getLaneX(lane.toColumn)"
-                  y2="48"
+                  :d="drawCurve(getLaneX(lane.column), rowHeight / 2, getLaneX(lane.toColumn), rowHeight)"
                   :stroke="lane.color"
-                  stroke-width="2" />
+                  stroke-width="2"
+                  fill="none" />
               </template>
               <!-- Commit node -->
               <circle
-                :cx="getLaneX(getCommitColumn(index))"
-                cy="24"
+                :cx="getLaneX(getCommitColumn(startIndex + i))"
+                :cy="rowHeight / 2"
                 r="6"
-                :fill="getCommitColor(index)"
+                :fill="getCommitColor(startIndex + i)"
                 stroke="var(--neo-black)"
                 stroke-width="2" />
             </svg>
@@ -98,7 +107,7 @@
     <!-- Selected commit details -->
     <aside v-if="selectedCommit" class="details-panel card">
       <div class="panel-header">
-        <h3>COMMIT DETAILS</h3>
+        <h3>CHI TIẾT COMMIT</h3>
         <button class="btn btn-icon btn-ghost" @click="selectedCommit = null">
           ✕
         </button>
@@ -111,7 +120,7 @@
         </div>
 
         <div class="detail-group">
-          <label>AUTHOR</label>
+          <label>TÁC GIẢ</label>
           <span class="font-bold">{{ selectedCommit.author }}</span>
           <span class="text-muted text-sm">{{
             selectedCommit.authorEmail
@@ -119,12 +128,12 @@
         </div>
 
         <div class="detail-group">
-          <label>DATE</label>
+          <label>NGÀY</label>
           <span>{{ formatFullDate(selectedCommit.date) }}</span>
         </div>
 
         <div class="detail-group">
-          <label>MESSAGE</label>
+          <label>NỘI DUNG</label>
           <p class="commit-full-message">{{ selectedCommit.message }}</p>
         </div>
 
@@ -142,7 +151,7 @@
         </div>
 
         <div v-if="selectedCommit.parentHashes.length > 0" class="detail-group">
-          <label>PARENTS</label>
+          <label>COMMIT CHA</label>
           <div class="parents-list">
             <code
               v-for="parent in selectedCommit.parentHashes"
@@ -158,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from "vue";
 import { useRepositoryStore } from "@/stores/repository";
 import type { GitGraphCommit } from "@/types";
 
@@ -166,6 +175,45 @@ const repositoryStore = useRepositoryStore();
 const commits = ref<GitGraphCommit[]>([]);
 const loading = ref(false);
 const selectedCommit = ref<GitGraphCommit | null>(null);
+
+// Virtual scrolling
+const rowHeight = 48; // Must match CSS
+const scrollContainer = ref<HTMLElement | null>(null);
+const scrollTop = ref(0);
+const containerHeight = ref(800); // Initial estimate
+const buffer = 10; // Extra items to render
+
+const totalHeight = computed(() => commits.value.length * rowHeight);
+
+const startIndex = computed(() =>
+  Math.max(0, Math.floor(scrollTop.value / rowHeight) - buffer)
+);
+
+const endIndex = computed(() =>
+  Math.min(
+    commits.value.length,
+    Math.ceil((scrollTop.value + containerHeight.value) / rowHeight) + buffer
+  )
+);
+
+const visibleCommits = computed(() =>
+  commits.value.slice(startIndex.value, endIndex.value)
+);
+
+function getCommitTop(index: number) {
+  return index * rowHeight;
+}
+
+function onScroll(e: Event) {
+  scrollTop.value = (e.target as HTMLElement).scrollTop;
+}
+
+// Update container height on resize/mount
+function updateDimensions() {
+  if (scrollContainer.value) {
+    containerHeight.value = scrollContainer.value.clientHeight;
+  }
+}
 
 // Branch lane tracking
 const commitColumns = ref<Map<string, number>>(new Map());
@@ -188,14 +236,25 @@ const laneWidth = computed(() => Math.max(60, (maxColumn.value + 1) * 20 + 20));
 async function loadGitGraph() {
   if (!repositoryStore.currentRepository) return;
 
-  loading.value = true;
+  // Simple optimization: if we have data, show it first
+  if (commits.value.length === 0) {
+    loading.value = true;
+  }
+
   try {
     // Load all commits for the graph (limit=0 means no limit)
-    commits.value = await window.electronAPI.getGitGraph(
+    const newCommits = await window.electronAPI.getGitGraph(
       repositoryStore.currentRepository,
       0
     );
-    calculateBranchLanes();
+
+    // Only update if changed
+    if (newCommits.length !== commits.value.length || newCommits[0]?.hash !== commits.value[0]?.hash) {
+       commits.value = newCommits;
+       calculateBranchLanes(); // This now also calls precalculateRowLanes
+       nextTick(() => updateDimensions());
+    }
+
   } catch (e) {
     console.error("Failed to load git graph:", e);
   } finally {
@@ -260,6 +319,7 @@ function calculateBranchLanes() {
       activeLanes.pop();
     }
   }
+  precalculateRowLanes(); // Call pre-calculation after columns are determined
 }
 
 function getCommitColumn(index: number): number {
@@ -284,71 +344,138 @@ interface Lane {
   toColumn?: number;
 }
 
-function getLanes(index: number): Lane[] {
-  const lanes: Lane[] = [];
-  const commit = commits.value[index];
-  const commitColumn = getCommitColumn(index);
+// Side storage for row lanes to avoid re-calc
+const rowLanes = ref<Lane[][]>([]);
 
-  // Track which lanes have active commits passing through
-  const activeLanesAtRow = new Set<number>();
+function precalculateRowLanes() {
+  rowLanes.value = new Array(commits.value.length);
 
-  // Check commits above to see what lanes are active
-  for (let i = 0; i < index; i++) {
-    const aboveCommit = commits.value[i];
-    const aboveColumn = getCommitColumn(i);
+  // Simulate the activeLanes state for each row to determine drawing instructions
+  const currentActiveLanes: (string | null)[] = []; // Stores parent hash or null for empty
+  const currentLaneColors: (string | null)[] = []; // Stores color for each lane
 
-    // Check if any parent of the above commit passes through this row
-    for (const parentHash of aboveCommit.parentHashes) {
-      const parentIndex = commits.value.findIndex((c) => c.hash === parentHash);
-      if (parentIndex > index) {
-        // Parent is below, so this lane passes through
-        const parentColumn = commitColumns.value.get(parentHash);
-        if (parentColumn !== undefined) {
-          activeLanesAtRow.add(aboveColumn);
-        }
+  for (let i = 0; i < commits.value.length; i++) {
+    const commit = commits.value[i];
+    const commitColumn = commitColumns.value.get(commit.hash) || 0;
+    const commitColor = branchColors[commitColumn % branchColors.length];
+    const lanesForThisRow: Lane[] = [];
+
+    // 1. Determine incoming lanes (before this commit is processed)
+    const incomingActiveLanes = [...currentActiveLanes];
+
+    // 2. Draw 'through' lines for lanes that are active and not the current commit's lane
+    for (let col = 0; col < incomingActiveLanes.length; col++) {
+      if (col === commitColumn) continue; // This lane is for the current commit
+      if (incomingActiveLanes[col] !== null) {
+        // If this lane is active and not for the current commit, it passes through
+        lanesForThisRow.push({
+          column: col,
+          color: currentLaneColors[col] || branchColors[col % branchColors.length],
+          through: true,
+        });
       }
     }
-  }
 
-  // Draw through lines for active lanes
-  for (const laneCol of activeLanesAtRow) {
-    if (laneCol !== commitColumn) {
-      lanes.push({
-        column: laneCol,
-        color: branchColors[laneCol % branchColors.length],
-        through: true,
+    // 3. Draw lines related to the current commit
+    // Line from above (if this commit is a child of a previous commit in this lane)
+    if (incomingActiveLanes[commitColumn] === commit.hash) {
+      lanesForThisRow.push({
+        column: commitColumn,
+        color: commitColor,
+        fromAbove: true,
+        toColumn: commitColumn,
       });
     }
-  }
 
-  // Draw merge lines from parents
-  if (commit.parentHashes.length > 1) {
-    // This is a merge commit
+    // Line to below (to its first parent)
+    if (commit.parentHashes.length > 0) {
+      lanesForThisRow.push({
+        column: commitColumn, // Start from current commit's column
+        color: commitColor,
+        toBelow: true,
+        toColumn: commitColumn, // Assumes first parent continues in same column initially
+      });
+    }
+
+    // Merge lines (from this commit to other parents)
     for (let p = 1; p < commit.parentHashes.length; p++) {
       const parentHash = commit.parentHashes[p];
       const parentColumn = commitColumns.value.get(parentHash);
       if (parentColumn !== undefined && parentColumn !== commitColumn) {
-        lanes.push({
-          column: parentColumn,
-          color: branchColors[parentColumn % branchColors.length],
+        lanesForThisRow.push({
+          column: commitColumn, // Start from current commit's column
+          color: branchColors[parentColumn % branchColors.length], // Color of the target branch
           toBelow: true,
-          toColumn: commitColumn,
+          toColumn: parentColumn, // End at the parent's column
         });
       }
     }
+
+    // 4. Update currentActiveLanes for the next iteration (as if calculateBranchLanes was run)
+    // Find where this commit was supposed to go
+    let currentCommitLaneIndex = currentActiveLanes.indexOf(commit.hash);
+    if (currentCommitLaneIndex === -1) {
+      currentCommitLaneIndex = currentActiveLanes.indexOf(null);
+      if (currentCommitLaneIndex === -1) {
+        currentCommitLaneIndex = currentActiveLanes.length;
+        currentActiveLanes.push(null);
+        currentLaneColors.push(null);
+      }
+    }
+
+    // Assign this commit's parent to its lane
+    if (commit.parentHashes.length > 0) {
+      currentActiveLanes[currentCommitLaneIndex] = commit.parentHashes[0];
+      currentLaneColors[currentCommitLaneIndex] = commitColor;
+    } else {
+      currentActiveLanes[currentCommitLaneIndex] = null; // Lane ends
+      currentLaneColors[currentCommitLaneIndex] = null;
+    }
+
+    // Handle additional parents (merges)
+    for (let p = 1; p < commit.parentHashes.length; p++) {
+      const parentHash = commit.parentHashes[p];
+      if (!currentActiveLanes.includes(parentHash)) {
+        let newLaneIndex = currentActiveLanes.indexOf(null);
+        if (newLaneIndex === -1) {
+          newLaneIndex = currentActiveLanes.length;
+          currentActiveLanes.push(null);
+          currentLaneColors.push(null);
+        }
+        currentActiveLanes[newLaneIndex] = parentHash;
+        currentLaneColors[newLaneIndex] = branchColors[newLaneIndex % branchColors.length];
+      }
+    }
+
+    // Clean up empty lanes from the end
+    while (currentActiveLanes.length > 0 && currentActiveLanes[currentActiveLanes.length - 1] === null) {
+      currentActiveLanes.pop();
+      currentLaneColors.pop();
+    }
+
+    rowLanes.value[i] = lanesForThisRow;
+  }
+}
+
+function getLanes(index: number): Lane[] {
+  return rowLanes.value[index] || [];
+}
+
+function drawCurve(x1: number, y1: number, x2: number, y2: number): string {
+  if (x1 === x2) {
+    return `M ${x1} ${y1} L ${x2} ${y2}`;
   }
 
-  // Main branch line (first parent)
-  if (commit.parentHashes.length > 0) {
-    lanes.push({
-      column: commitColumn,
-      color: branchColors[commitColumn % branchColors.length],
-      toBelow: true,
-      toColumn: commitColumn,
-    });
-  }
+  // Bezier curve logic
+  // Vertical start from y1, Vertical end at y2
+  // Control points:
+  // cp1: (x1, y1 + smoothing)
+  // cp2: (x2, y2 - smoothing)
 
-  return lanes;
+  const height = y2 - y1;
+  const smoothing = height / 2;
+
+  return `M ${x1} ${y1} C ${x1} ${y1 + smoothing}, ${x2} ${y2 - smoothing}, ${x2} ${y2}`;
 }
 
 function getRefClass(ref: string): string {
@@ -372,15 +499,15 @@ function formatDate(date: Date | string): string {
   const diffMs = now.getTime() - d.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return "today";
-  if (diffDays === 1) return "yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  if (diffDays === 0) return "hôm nay";
+  if (diffDays === 1) return "hôm qua";
+  if (diffDays < 7) return `${diffDays} ngày trước`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`;
   return d.toLocaleDateString();
 }
 
 function formatFullDate(date: Date | string): string {
-  return new Date(date).toLocaleString("en-US", {
+  return new Date(date).toLocaleString("vi-VN", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -400,9 +527,15 @@ watch(
 );
 
 onMounted(() => {
+  window.addEventListener('resize', updateDimensions);
+  updateDimensions();
   if (repositoryStore.currentRepository) {
     loadGitGraph();
   }
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateDimensions);
 });
 </script>
 
@@ -434,11 +567,12 @@ onMounted(() => {
   background: var(--neo-white);
   border: 4px solid var(--neo-black);
   box-shadow: 6px 6px 0 var(--neo-black);
+  position: relative; /* For virtual scroll positioning */
 }
 
 .graph-list {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  /* Height set dynamically */
 }
 
 .graph-row {
@@ -447,7 +581,8 @@ onMounted(() => {
   border-bottom: 2px solid var(--neo-black);
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-height: 48px;
+  height: 48px; /* Fixed height for virtualization */
+  box-sizing: border-box;
 }
 
 .graph-row:hover {
@@ -470,11 +605,11 @@ onMounted(() => {
 
 .commit-content {
   flex: 1;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0 var(--spacing-md);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -486,7 +621,7 @@ onMounted(() => {
 
 .ref-badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 1px 6px;
   font-size: 0.65rem;
   font-weight: 700;
   border: 2px solid var(--neo-black);
@@ -533,7 +668,7 @@ onMounted(() => {
 .commit-hash {
   font-family: var(--font-mono);
   background: var(--neo-blue);
-  padding: 2px 6px;
+  padding: 1px 4px;
   border: 2px solid var(--neo-black);
   font-size: 0.7rem;
 }

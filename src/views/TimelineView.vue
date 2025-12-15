@@ -2,11 +2,11 @@
   <div class="flex h-full p-6 gap-6">
     <div
       class="fixed top-6 left-[268px] right-6 flex items-center justify-between z-10 bg-neo-cream py-2">
-      <h1 class="text-2xl">◷ COMMIT TIMELINE</h1>
+      <h1 class="text-2xl">◷ DÒNG THỜI GIAN COMMIT</h1>
 
       <!-- Branch Selector -->
       <div class="flex items-center gap-2">
-        <label class="text-xs font-bold">BRANCH:</label>
+        <label class="text-xs font-bold">NHÁNH:</label>
         <select
           v-model="selectedBranch"
           @change="onBranchChange"
@@ -28,7 +28,7 @@
           v-model="searchQuery"
           type="text"
           class="border-none shadow-none w-[220px] text-sm focus:bg-neo-yellow focus:shadow-none bg-transparent outline-none p-2"
-          placeholder="SEARCH COMMITS..." />
+          placeholder="TÌM KIẾM COMMIT..." />
       </div>
     </div>
 
@@ -37,12 +37,12 @@
       v-if="!repositoryStore.hasRepository"
       class="flex-1 flex flex-col items-center justify-center gap-6 text-center mt-[60px] card">
       <div class="text-6xl opacity-30">◷</div>
-      <h3 class="text-2xl font-bold">NO REPOSITORY SELECTED</h3>
+      <h3 class="text-2xl font-bold">CHƯA CHỌN KHO CHỨA</h3>
       <p class="font-medium text-stone-600">
-        Select a repository from the home page to view the commit timeline.
+        Chọn một kho chứa từ trang chủ để xem dòng thời gian commit.
       </p>
       <router-link to="/" class="btn btn-primary"
-        >◆ OPEN REPOSITORY</router-link
+        >◆ MỞ KHO CHỨA</router-link
       >
     </div>
 
@@ -58,12 +58,12 @@
         <div class="w-[3px] h-[30px] bg-neo-black"></div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold">{{ uniqueAuthors.length }}</span>
-          <span class="text-xs font-bold uppercase">AUTHORS</span>
+          <span class="text-xs font-bold uppercase">TÁC GIẢ</span>
         </div>
         <div class="w-[3px] h-[30px] bg-neo-black"></div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold">{{ dateRange }}</span>
-          <span class="text-xs font-bold uppercase">TIME RANGE</span>
+          <span class="text-xs font-bold uppercase">KHOẢNG THỜI GIAN</span>
         </div>
       </div>
 
@@ -112,7 +112,7 @@
                       >
                       <span class="text-red-600">-{{ commit.deletions }}</span>
                       <span class="text-stone-500"
-                        >{{ commit.filesChanged }} files</span
+                        >{{ commit.filesChanged }} tệp</span
                       >
                     </div>
                   </div>
@@ -124,7 +124,7 @@
           <div
             v-if="filteredCommits.length === 0"
             class="p-8 text-center font-bold">
-            <p>NO COMMITS FOUND MATCHING "{{ searchQuery }}"</p>
+            <p>KHÔNG TÌM THẤY COMMIT NÀO PHÙ HỢP "{{ searchQuery }}"</p>
           </div>
         </div>
 
@@ -136,15 +136,15 @@
             class="btn btn-secondary btn-lg"
             @click="handleLoadMore"
             :disabled="repositoryStore.isLoading">
-            <span v-if="repositoryStore.isLoading">LOADING...</span>
-            <span v-else>↓ LOAD MORE COMMITS</span>
+            <span v-if="repositoryStore.isLoading">ĐANG TẢI...</span>
+            <span v-else>↓ TẢI THÊM COMMIT</span>
           </button>
         </div>
 
         <div
           v-if="!repositoryStore.hasMoreCommits"
           class="text-center p-6 text-stone-500 text-xs font-bold">
-          <span>— END OF COMMITS —</span>
+          <span>— HẾT COMMIT —</span>
         </div>
       </div>
     </div>
@@ -155,7 +155,7 @@
       class="w-[360px] flex flex-col mt-[60px] overflow-hidden card">
       <div
         class="flex items-center justify-between pb-4 border-b-3 border-neo-black mb-4">
-        <h3 class="m-0 text-xl">COMMIT DETAILS</h3>
+        <h3 class="m-0 text-xl">CHI TIẾT COMMIT</h3>
         <button class="btn btn-icon btn-ghost" @click="selectedCommit = null">
           ✕
         </button>
@@ -174,7 +174,7 @@
 
         <div class="flex flex-col gap-1">
           <label class="text-xs font-bold tracking-wider text-stone-500"
-            >AUTHOR</label
+            >TÁC GIẢ</label
           >
           <span class="font-bold">{{ selectedCommit.author }}</span>
           <span class="text-stone-500 text-sm">{{
@@ -184,7 +184,7 @@
 
         <div class="flex flex-col gap-1">
           <label class="text-xs font-bold tracking-wider text-stone-500"
-            >DATE</label
+            >NGÀY</label
           >
           <span class="text-sm font-medium">{{
             formatFullDate(selectedCommit.date)
@@ -193,7 +193,7 @@
 
         <div class="flex flex-col gap-1">
           <label class="text-xs font-bold tracking-wider text-stone-500"
-            >MESSAGE</label
+            >NỘI DUNG</label
           >
           <p class="font-medium leading-normal text-sm">
             {{ selectedCommit.message }}
@@ -202,7 +202,7 @@
 
         <div class="flex flex-col gap-1">
           <label class="text-xs font-bold tracking-wider text-stone-500"
-            >CHANGES</label
+            >THAY ĐỔI</label
           >
           <div class="flex gap-2 flex-wrap">
             <span class="badge badge-success"
@@ -211,13 +211,13 @@
             <span class="badge badge-danger"
               >-{{ selectedCommit.deletions }}</span
             >
-            <span class="badge">{{ selectedCommit.filesChanged }} FILES</span>
+            <span class="badge">{{ selectedCommit.filesChanged }} TỆP</span>
           </div>
         </div>
 
         <div class="flex flex-col gap-1 flex-1 min-h-0">
           <label class="text-xs font-bold tracking-wider text-stone-500"
-            >CHANGED FILES</label
+            >TỆP ĐÃ THAY ĐỔI</label
           >
           <div
             class="flex flex-col gap-1 overflow-y-auto max-h-[200px] border-2 border-neo-black p-1 bg-neo-cream/50">
@@ -241,7 +241,7 @@
             </div>
             <div v-if="loadingFiles" class="flex items-center gap-2 p-2">
               <span class="loader" style="width: 16px; height: 16px"></span>
-              <span class="text-sm font-bold">LOADING FILES...</span>
+              <span class="text-sm font-bold">ĐANG TẢI TỆP...</span>
             </div>
           </div>
         </div>
@@ -325,9 +325,9 @@ const dateRange = computed(() => {
     (last.getTime() - first.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  if (diffDays < 30) return `${diffDays} DAYS`;
-  if (diffDays < 365) return `${Math.round(diffDays / 30)} MONTHS`;
-  return `${Math.round(diffDays / 365)} YEARS`;
+  if (diffDays < 30) return `${diffDays} NGÀY`;
+  if (diffDays < 365) return `${Math.round(diffDays / 30)} THÁNG`;
+  return `${Math.round(diffDays / 365)} NĂM`;
 });
 
 watch(selectedCommit, async (commit) => {
@@ -354,10 +354,10 @@ function formatGroupDate(dateStr: string): string {
   yesterday.setDate(yesterday.getDate() - 1);
 
   if (dateStr === today.toISOString().split("T")[0]) {
-    return "TODAY";
+    return "HÔM NAY";
   }
   if (dateStr === yesterday.toISOString().split("T")[0]) {
-    return "YESTERDAY";
+    return "HÔM QUA";
   }
 
   return date
