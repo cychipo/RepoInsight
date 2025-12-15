@@ -31,6 +31,26 @@ contextBridge.exposeInMainWorld("electronAPI", {
   checkoutBranch: (repoPath: string, branchName: string) =>
     ipcRenderer.invoke("git:checkoutBranch", repoPath, branchName),
   rebase: (repoPath: string) => ipcRenderer.invoke("git:rebase", repoPath),
+  stageFile: (repoPath: string, filePath: string) =>
+    ipcRenderer.invoke("git:stageFile", repoPath, filePath),
+  unstageFile: (repoPath: string, filePath: string) =>
+    ipcRenderer.invoke("git:unstageFile", repoPath, filePath),
+  stageAll: (repoPath: string) => ipcRenderer.invoke("git:stageAll", repoPath),
+  unstageAll: (repoPath: string) =>
+    ipcRenderer.invoke("git:unstageAll", repoPath),
+  discardFile: (repoPath: string, filePath: string) =>
+    ipcRenderer.invoke("git:discardFile", repoPath, filePath),
+  discardAll: (repoPath: string) =>
+    ipcRenderer.invoke("git:discardAll", repoPath),
+  commit: (repoPath: string, message: string) =>
+    ipcRenderer.invoke("git:commit", repoPath, message),
+  push: (repoPath: string) => ipcRenderer.invoke("git:push", repoPath),
+  getStagedDiff: (repoPath: string) =>
+    ipcRenderer.invoke("git:getStagedDiff", repoPath),
+  getUnstagedDiff: (repoPath: string) =>
+    ipcRenderer.invoke("git:getUnstagedDiff", repoPath),
+  getFileDiff: (repoPath: string, filePath: string, staged: boolean) =>
+    ipcRenderer.invoke("git:getFileDiff", repoPath, filePath, staged),
 
   // Analysis operations
   analyzeRepository: (repoPath: string) =>
@@ -52,7 +72,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
 
   // Settings
-  getGitConfig: (key: string, repoPath?: string) => ipcRenderer.invoke("settings:getGitConfig", key, repoPath),
+  getGitConfig: (key: string, repoPath?: string) =>
+    ipcRenderer.invoke("settings:getGitConfig", key, repoPath),
   setGitConfig: (key: string, value: string, repoPath?: string) =>
     ipcRenderer.invoke("settings:setGitConfig", key, value, repoPath),
   getApiKey: () => ipcRenderer.invoke("settings:getApiKey"),

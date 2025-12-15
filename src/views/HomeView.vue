@@ -5,7 +5,7 @@
       <div class="max-w-[550px] animate-fadeIn">
         <div
           class="inline-block px-3 py-1 mb-2 text-xs font-bold bg-neo-black text-neo-white tracking-widest">
-           GIT ANALYSIS TOOL
+          GIT ANALYSIS TOOL
         </div>
         <h1 class="text-5xl leading-none mb-4">
           KHÁM PHÁ
@@ -15,9 +15,9 @@
           >
         </h1>
         <p class="text-lg mb-8 leading-relaxed">
-          Phân tích kho chứa Git và trực quan hóa mối quan hệ mã nguồn dưới dạng biểu đồ
-          tri thức đẹp mắt. Khám phá các điểm nóng, hiểu các phụ thuộc và có được
-          cái nhìn sâu sắc.
+          Phân tích kho chứa Git và trực quan hóa mối quan hệ mã nguồn dưới dạng
+          biểu đồ tri thức đẹp mắt. Khám phá các điểm nóng, hiểu các phụ thuộc
+          và có được cái nhìn sâu sắc.
         </p>
 
         <div class="flex gap-4">
@@ -56,6 +56,52 @@
           class="absolute w-[80px] h-[80px] bg-neo-blue border-4 border-neo-black shadow-brutal-lg bottom-10 left-[30%] animate-bounce [animation-duration:3s] [animation-delay:1s]"></div>
         <div
           class="absolute w-[100px] h-[100px] bg-neo-green border-4 border-neo-black shadow-brutal-lg rounded-full bottom-20 right-[25%] animate-bounce [animation-duration:3s] [animation-delay:1.5s]"></div>
+      </div>
+    </section>
+
+    <!-- Recent Repositories Section -->
+    <section
+      v-if="
+        !repositoryStore.currentRepository &&
+        repositoryStore.recentRepositories.length > 0
+      "
+      class="mb-12 animate-fadeIn">
+      <h2 class="text-xl mb-6 flex items-center gap-3">
+        <span>◷</span>
+        LỊCH SỬ KHO CHỨA
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="repo in repositoryStore.recentRepositories"
+          :key="repo.path"
+          class="card card-accent-white hover:bg-neo-yellow cursor-pointer group relative"
+          @click="openRecentRepo(repo.path)">
+          <div class="flex items-start justify-between">
+            <div class="flex flex-col gap-1 min-w-0">
+              <h3
+                class="text-base font-bold m-0 truncate w-full group-hover:text-neo-blue transition-colors">
+                {{ repo.name }}
+              </h3>
+              <p
+                class="text-xs text-stone-500 font-mono truncate w-full"
+                :title="repo.path">
+                {{ repo.path }}
+              </p>
+              <span
+                class="text-[10px] font-bold mt-2 text-stone-400 uppercase tracking-wider">
+                {{ formatTimeAgo(repo.lastOpened) }}
+              </span>
+            </div>
+
+            <button
+              class="opacity-0 group-hover:opacity-100 p-1 hover:bg-neo-red hover:text-white transition-all rounded-sm"
+              @click.stop="removeHistory(repo.path)"
+              title="Xóa khỏi lịch sử">
+              ✕
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -226,7 +272,8 @@
           </div>
           <h3 class="text-base m-0">BIỂU ĐỒ TRI THỨC</h3>
           <p class="text-[0.9rem] m-0">
-            Trực quan hóa mối quan hệ giữa các commit, tệp và hàm dưới dạng biểu đồ tương tác.
+            Trực quan hóa mối quan hệ giữa các commit, tệp và hàm dưới dạng biểu
+            đồ tương tác.
           </p>
         </div>
 
@@ -237,7 +284,8 @@
           </div>
           <h3 class="text-base m-0">PHÂN TÍCH MÃ</h3>
           <p class="text-[0.9rem] m-0">
-            Phân tích tĩnh để trích xuất các hàm, lớp và hiểu các mối quan hệ gọi hàm.
+            Phân tích tĩnh để trích xuất các hàm, lớp và hiểu các mối quan hệ
+            gọi hàm.
           </p>
         </div>
 
@@ -259,7 +307,8 @@
           </div>
           <h3 class="text-base m-0">XEM DÒNG THỜI GIAN</h3>
           <p class="text-[0.9rem] m-0">
-            Khám phá cách mã nguồn của bạn phát triển theo thời gian với trực quan hóa dòng thời gian commit.
+            Khám phá cách mã nguồn của bạn phát triển theo thời gian với trực
+            quan hóa dòng thời gian commit.
           </p>
         </div>
       </div>
@@ -293,9 +342,7 @@
           </div>
 
           <div class="flex flex-col gap-2">
-            <label class="text-xs font-bold tracking-wider"
-              >THƯ MỤC ĐÍCH</label
-            >
+            <label class="text-xs font-bold tracking-wider">THƯ MỤC ĐÍCH</label>
             <div class="flex gap-0">
               <input
                 type="text"
@@ -420,6 +467,26 @@ async function selectCloneDestination() {
   if (result.success && result.path) {
     cloneDestPath.value = result.path;
   }
+}
+
+async function openRecentRepo(path: string) {
+  await repositoryStore.setRepository(path);
+}
+
+function removeHistory(path: string) {
+  repositoryStore.removeRecentRepository(path);
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} NGÀY TRƯỚC`;
+  if (hours > 0) return `${hours} GIỜ TRƯỚC`;
+  if (minutes > 0) return `${minutes} PHÚT TRƯỚC`;
+  return "VỪA MỚI";
 }
 
 async function handleClone() {
