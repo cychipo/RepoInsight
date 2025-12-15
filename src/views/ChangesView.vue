@@ -527,6 +527,7 @@ async function handleCommit() {
     if (result.success) {
       commitMessage.value = "";
       await repositoryStore.loadGitStatus();
+      await checkAheadBehind();
     } else {
       alert("Commit thất bại: " + result.error);
     }
@@ -547,6 +548,7 @@ async function handlePush() {
     );
     if (result.success) {
       alert("Push thành công!");
+      await checkAheadBehind();
     } else {
       alert("Push thất bại: " + result.error);
     }
