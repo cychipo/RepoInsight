@@ -1,32 +1,40 @@
 <template>
-  <div class="graph-view">
-    <div class="view-header">
-      <div class="view-title-group">
-        <h1>
+  <div class="h-full flex flex-col p-6 gap-4">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-6">
+        <h1 class="text-2xl font-bold uppercase">
           {{ viewMode === "knowledge" ? "◈ KNOWLEDGE GRAPH" : "◈ GIT GRAPH" }}
         </h1>
-        <div class="view-toggle">
+        <div class="flex gap-0">
           <button
-            class="toggle-btn"
-            :class="{ active: viewMode === 'knowledge' }"
+            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-neo-yellow"
+            :class="{
+              '!bg-neo-blue shadow-[inset_0_0_0_2px_black]':
+                viewMode === 'knowledge',
+            }"
             @click="viewMode = 'knowledge'">
             KNOWLEDGE
           </button>
           <button
-            class="toggle-btn"
-            :class="{ active: viewMode === 'git' }"
+            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-neo-yellow"
+            :class="{
+              '!bg-neo-blue shadow-[inset_0_0_0_2px_black]': viewMode === 'git',
+            }"
             @click="viewMode = 'git'">
             GIT GRAPH
           </button>
         </div>
       </div>
-      <div class="view-actions" v-if="viewMode === 'knowledge'">
-        <div class="filter-group">
+      <div class="flex gap-4 flex-wrap" v-if="viewMode === 'knowledge'">
+        <div class="flex gap-0">
           <button
             v-for="nodeType in nodeTypes"
             :key="nodeType.id"
-            class="filter-btn"
-            :class="{ active: activeFilters.includes(nodeType.id) }"
+            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-[var(--filter-color)]"
+            :class="{
+              '!bg-[var(--filter-color)] shadow-[inset_0_0_0_2px_black]':
+                activeFilters.includes(nodeType.id),
+            }"
             :style="{ '--filter-color': nodeType.color }"
             @click="toggleFilter(nodeType.id)">
             {{ nodeType.label }}
@@ -40,12 +48,16 @@
 
     <!-- Knowledge Graph View -->
     <template v-if="viewMode === 'knowledge'">
-      <div class="graph-container">
+      <div class="flex-1 flex gap-6 min-h-0">
         <!-- Graph Canvas -->
-        <div ref="graphContainer" class="graph-canvas">
-          <div v-if="!graphStore.hasData" class="empty-state">
-            <div class="empty-icon">◈</div>
-            <h3>NO GRAPH DATA</h3>
+        <div
+          ref="graphContainer"
+          class="flex-1 bg-neo-white border-4 border-neo-black shadow-brutal relative overflow-hidden">
+          <div
+            v-if="!graphStore.hasData"
+            class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center p-6">
+            <div class="text-6xl opacity-30">◈</div>
+            <h3 class="text-xl font-bold m-0">NO GRAPH DATA</h3>
             <p>
               Select a repository from the home page to generate the knowledge
               graph.
@@ -57,10 +69,13 @@
         </div>
 
         <!-- Node Details Panel -->
-        <aside v-if="selectedNode" class="details-panel card">
-          <div class="panel-header">
+        <aside
+          v-if="selectedNode"
+          class="w-[320px] flex flex-col overflow-hidden card">
+          <div
+            class="flex items-center justify-between mb-4 pb-4 border-b-3 border-neo-black">
             <div
-              class="node-type-badge"
+              class="px-3 py-1 text-xs font-bold border-2 border-neo-black"
               :style="{ background: getNodeColor(selectedNode.type) }">
               {{ selectedNode.type.toUpperCase() }}
             </div>
@@ -69,81 +84,109 @@
             </button>
           </div>
 
-          <div class="panel-content">
-            <h3 class="node-label">{{ selectedNode.label }}</h3>
+          <div class="flex-1 overflow-y-auto">
+            <h3 class="text-lg font-bold mb-4 break-words">
+              {{ selectedNode.label }}
+            </h3>
 
-            <div class="metadata-section">
+            <div class="flex flex-col gap-4">
               <template v-if="selectedNode.type === 'commit'">
-                <div class="meta-item">
-                  <span class="meta-label">HASH</span>
-                  <code class="meta-value">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >HASH</span
+                  >
+                  <code class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.hash
                   }}</code>
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">AUTHOR</span>
-                  <span class="meta-value">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >AUTHOR</span
+                  >
+                  <span class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.author
                   }}</span>
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">DATE</span>
-                  <span class="meta-value">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >DATE</span
+                  >
+                  <span class="text-sm font-semibold break-all">{{
                     formatDate(selectedNode.metadata.date)
                   }}</span>
                 </div>
-                <div class="meta-item full">
-                  <span class="meta-label">MESSAGE</span>
-                  <p class="meta-value">{{ selectedNode.metadata.message }}</p>
+                <div class="flex flex-col gap-1 col-span-full">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >MESSAGE</span
+                  >
+                  <p class="text-sm font-semibold break-all">
+                    {{ selectedNode.metadata.message }}
+                  </p>
                 </div>
               </template>
 
               <template v-else-if="selectedNode.type === 'file'">
-                <div class="meta-item">
-                  <span class="meta-label">PATH</span>
-                  <code class="meta-value">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >PATH</span
+                  >
+                  <code class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.path
                   }}</code>
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">LANGUAGE</span>
-                  <span class="meta-value">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >LANGUAGE</span
+                  >
+                  <span class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.language
                   }}</span>
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">MODIFICATIONS</span>
-                  <span class="meta-value highlight">{{
-                    selectedNode.metadata.modifyCount
-                  }}</span>
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >MODIFICATIONS</span
+                  >
+                  <span
+                    class="text-sm font-semibold break-all bg-neo-yellow px-1 inline-block w-max"
+                    >{{ selectedNode.metadata.modifyCount }}</span
+                  >
                 </div>
               </template>
 
               <template v-else-if="selectedNode.type === 'function'">
-                <div class="meta-item">
-                  <span class="meta-label">NAME</span>
-                  <code class="meta-value">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >NAME</span
+                  >
+                  <code class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.name
                   }}</code>
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">FILE</span>
-                  <code class="meta-value truncate">{{
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >FILE</span
+                  >
+                  <code class="text-sm font-semibold break-all truncate">{{
                     selectedNode.metadata.filePath
                   }}</code>
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">LINES</span>
-                  <span class="meta-value"
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >LINES</span
+                  >
+                  <span class="text-sm font-semibold break-all"
                     >{{ selectedNode.metadata.startLine }} -
                     {{ selectedNode.metadata.endLine }}</span
                   >
                 </div>
-                <div class="meta-item">
-                  <span class="meta-label">MODIFICATIONS</span>
-                  <span class="meta-value highlight">{{
-                    selectedNode.metadata.modifyCount
-                  }}</span>
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-bold text-stone-500 tracking-wider"
+                    >MODIFICATIONS</span
+                  >
+                  <span
+                    class="text-sm font-semibold break-all bg-neo-yellow px-1 inline-block w-max"
+                    >{{ selectedNode.metadata.modifyCount }}</span
+                  >
                 </div>
               </template>
             </div>
@@ -152,32 +195,47 @@
       </div>
 
       <!-- Graph Legend -->
-      <div class="graph-legend">
-        <div class="legend-title">LEGEND</div>
-        <div class="legend-items">
-          <div class="legend-item">
-            <span class="legend-dot" style="background: var(--neo-blue)"></span>
+      <div
+        class="flex items-center gap-6 p-4 bg-neo-white border-3 border-neo-black shadow-brutal">
+        <div class="text-xs font-bold pr-4 border-r-3 border-neo-black">
+          LEGEND
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span
+              class="w-[14px] h-[14px] border-2 border-neo-black"
+              style="background: var(--neo-blue)"></span>
             <span>COMMIT</span>
           </div>
-          <div class="legend-item">
+          <div class="flex items-center gap-2 text-xs font-semibold">
             <span
-              class="legend-dot"
+              class="w-[14px] h-[14px] border-2 border-neo-black"
               style="background: var(--neo-green)"></span>
             <span>FILE</span>
           </div>
-          <div class="legend-item">
+          <div class="flex items-center gap-2 text-xs font-semibold">
             <span
-              class="legend-dot"
+              class="w-[14px] h-[14px] border-2 border-neo-black"
               style="background: var(--neo-orange)"></span>
             <span>FUNCTION</span>
           </div>
-          <div class="legend-divider"></div>
-          <div class="legend-item">
-            <span class="legend-line"></span>
+          <div class="w-[3px] h-5 bg-neo-black"></div>
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span class="w-6 h-[3px] bg-neo-black"></span>
             <span>MODIFIES</span>
           </div>
-          <div class="legend-item">
-            <span class="legend-line dashed"></span>
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span
+              class="w-6 h-[3px]"
+              style="
+                background: repeating-linear-gradient(
+                  90deg,
+                  #000 0,
+                  #000 4px,
+                  transparent 4px,
+                  transparent 8px
+                );
+              "></span>
             <span>CONTAINS</span>
           </div>
         </div>

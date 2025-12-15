@@ -1,7 +1,7 @@
 <template>
-  <div class="analysis-view">
-    <div class="view-header">
-      <h1>▤ CODE ANALYSIS</h1>
+  <div class="p-6 flex flex-col gap-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <h1 class="text-2xl font-bold uppercase">▤ CODE ANALYSIS</h1>
       <button
         v-if="repositoryStore.hasRepository"
         class="btn btn-primary"
@@ -16,9 +16,9 @@
     </div>
 
     <!-- Analysis Progress -->
-    <div v-if="isAnalyzing" class="progress-section card card-accent-yellow">
-      <div class="progress-header">
-        <span class="font-bold">{{ analysisProgress.message }}</span>
+    <div v-if="isAnalyzing" class="flex flex-col gap-2 card card-accent-yellow">
+      <div class="flex justify-between text-sm font-bold">
+        <span>{{ analysisProgress.message }}</span>
         <span class="badge"
           >{{ analysisProgress.current }} / {{ analysisProgress.total }}</span
         >
@@ -31,9 +31,11 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="!repositoryStore.hasRepository" class="empty-state card">
-      <div class="empty-icon">▤</div>
-      <h3>NO REPOSITORY SELECTED</h3>
+    <div
+      v-if="!repositoryStore.hasRepository"
+      class="flex flex-col items-center justify-center gap-4 p-12 text-center card">
+      <div class="text-6xl opacity-30">▤</div>
+      <h3 class="text-xl font-bold m-0">NO REPOSITORY SELECTED</h3>
       <p>Select a repository from the home page to view analysis results.</p>
       <router-link to="/" class="btn btn-primary"
         >◆ OPEN REPOSITORY</router-link
@@ -42,46 +44,70 @@
 
     <!-- Analysis Results -->
     <template v-else>
-      <div class="stats-row">
-        <div class="stat-card" style="background: var(--neo-blue)">
-          <div class="stat-value">{{ graphStore.stats.commits }}</div>
-          <div class="stat-label">COMMITS</div>
+      <div class="grid grid-cols-4 gap-4">
+        <div
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
+          style="background: var(--neo-blue)">
+          <div class="text-4xl font-bold mb-1">
+            {{ graphStore.stats.commits }}
+          </div>
+          <div class="text-xs font-bold uppercase tracking-wider">COMMITS</div>
         </div>
 
-        <div class="stat-card" style="background: var(--neo-green)">
-          <div class="stat-value">{{ graphStore.stats.files }}</div>
-          <div class="stat-label">FILES</div>
+        <div
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
+          style="background: var(--neo-green)">
+          <div class="text-4xl font-bold mb-1">
+            {{ graphStore.stats.files }}
+          </div>
+          <div class="text-xs font-bold uppercase tracking-wider">FILES</div>
         </div>
 
-        <div class="stat-card" style="background: var(--neo-orange)">
-          <div class="stat-value">{{ graphStore.stats.functions }}</div>
-          <div class="stat-label">FUNCTIONS</div>
+        <div
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
+          style="background: var(--neo-orange)">
+          <div class="text-4xl font-bold mb-1">
+            {{ graphStore.stats.functions }}
+          </div>
+          <div class="text-xs font-bold uppercase tracking-wider">
+            FUNCTIONS
+          </div>
         </div>
 
-        <div class="stat-card" style="background: var(--neo-pink)">
-          <div class="stat-value">{{ graphStore.stats.totalEdges }}</div>
-          <div class="stat-label">RELATIONSHIPS</div>
+        <div
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
+          style="background: var(--neo-pink)">
+          <div class="text-4xl font-bold mb-1">
+            {{ graphStore.stats.totalEdges }}
+          </div>
+          <div class="text-xs font-bold uppercase tracking-wider">
+            RELATIONSHIPS
+          </div>
         </div>
       </div>
 
-      <div class="analysis-grid">
+      <div class="grid grid-cols-2 gap-6">
         <!-- Hotspot Files -->
         <div class="card card-accent-pink">
-          <div class="card-header">
-            <h3 class="card-title">★ HOTSPOT FILES</h3>
+          <div
+            class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
+            <h3 class="text-lg font-bold m-0">★ HOTSPOT FILES</h3>
             <span class="badge badge-pink">MOST MODIFIED</span>
           </div>
-          <div class="list-container">
+          <div class="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
             <div
               v-for="(file, index) in hotspotFiles"
               :key="file.id"
-              class="list-item">
-              <span class="rank">{{ index + 1 }}</span>
-              <div class="item-info">
-                <span class="item-name truncate font-mono">{{
+              class="flex items-center gap-4 p-3 bg-neo-white border-3 border-neo-black transition-all hover:bg-neo-yellow hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-brutal">
+              <span
+                class="w-7 h-7 flex items-center justify-center bg-neo-black text-neo-white text-xs font-bold"
+                >{{ index + 1 }}</span
+              >
+              <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                <span class="text-sm font-semibold truncate font-mono">{{
                   file.label
                 }}</span>
-                <span class="item-meta">{{
+                <span class="text-xs font-medium text-stone-500">{{
                   (file.metadata as any).language
                 }}</span>
               </div>
@@ -89,7 +115,9 @@
                 >{{ (file.metadata as any).modifyCount }}×</span
               >
             </div>
-            <div v-if="hotspotFiles.length === 0" class="empty-list">
+            <div
+              v-if="hotspotFiles.length === 0"
+              class="p-6 text-center text-sm font-semibold text-stone-500">
               NO DATA AVAILABLE
             </div>
           </div>
@@ -97,21 +125,25 @@
 
         <!-- Hotspot Functions -->
         <div class="card card-accent-orange">
-          <div class="card-header">
-            <h3 class="card-title">⚡ HOTSPOT FUNCTIONS</h3>
+          <div
+            class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
+            <h3 class="text-lg font-bold m-0">⚡ HOTSPOT FUNCTIONS</h3>
             <span class="badge badge-warning">FREQUENTLY CHANGED</span>
           </div>
-          <div class="list-container">
+          <div class="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
             <div
               v-for="(func, index) in hotspotFunctions"
               :key="func.id"
-              class="list-item">
-              <span class="rank">{{ index + 1 }}</span>
-              <div class="item-info">
-                <span class="item-name truncate font-mono">{{
+              class="flex items-center gap-4 p-3 bg-neo-white border-3 border-neo-black transition-all hover:bg-neo-yellow hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-brutal">
+              <span
+                class="w-7 h-7 flex items-center justify-center bg-neo-black text-neo-white text-xs font-bold"
+                >{{ index + 1 }}</span
+              >
+              <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+                <span class="text-sm font-semibold truncate font-mono">{{
                   (func.metadata as any).name
                 }}</span>
-                <span class="item-meta truncate">{{
+                <span class="text-xs font-medium text-stone-500 truncate">{{
                   (func.metadata as any).filePath
                 }}</span>
               </div>
@@ -119,31 +151,39 @@
                 >{{ (func.metadata as any).modifyCount }}×</span
               >
             </div>
-            <div v-if="hotspotFunctions.length === 0" class="empty-list">
+            <div
+              v-if="hotspotFunctions.length === 0"
+              class="p-6 text-center text-sm font-semibold text-stone-500">
               NO DATA AVAILABLE
             </div>
           </div>
         </div>
 
         <!-- Co-Change Patterns -->
-        <div class="card card-accent-blue full-width">
-          <div class="card-header">
-            <h3 class="card-title">◈ CO-CHANGE PATTERNS</h3>
+        <div class="card card-accent-blue col-span-full">
+          <div
+            class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
+            <h3 class="text-lg font-bold m-0">◈ CO-CHANGE PATTERNS</h3>
             <span class="badge badge-primary">FILES CHANGED TOGETHER</span>
           </div>
-          <div class="cochange-grid">
+          <div
+            class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-2">
             <div
               v-for="(pattern, index) in coChangePatterns"
               :key="index"
-              class="cochange-item">
-              <code class="truncate">{{ getFileName(pattern.files[0]) }}</code>
-              <span class="cochange-arrow">↔</span>
-              <code class="truncate">{{ getFileName(pattern.files[1]) }}</code>
+              class="flex items-center gap-2 p-2 bg-neo-white border-3 border-neo-black transition-all hover:bg-neo-yellow hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-brutal">
+              <code class="flex-1 min-w-0 text-xs bg-neo-white truncate">{{
+                getFileName(pattern.files[0])
+              }}</code>
+              <span class="font-bold text-lg">↔</span>
+              <code class="flex-1 min-w-0 text-xs bg-neo-white truncate">{{
+                getFileName(pattern.files[1])
+              }}</code>
               <span class="badge badge-primary">{{ pattern.count }}×</span>
             </div>
             <div
               v-if="coChangePatterns.length === 0"
-              class="empty-list full-width">
+              class="p-6 text-center text-sm font-semibold text-stone-500 col-span-full">
               NO CO-CHANGE PATTERNS DETECTED
             </div>
           </div>
@@ -220,174 +260,3 @@ function getFileName(path: string): string {
   return path.split("/").pop() || path;
 }
 </script>
-
-<style scoped>
-.analysis-view {
-  padding: var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.view-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-
-.view-header h1 {
-  font-size: 1.5rem;
-}
-
-/* Progress */
-.progress-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-}
-
-/* Empty State */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-2xl);
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 4rem;
-  opacity: 0.3;
-}
-
-.empty-state h3 {
-  margin: 0;
-}
-
-/* Stats Row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-md);
-}
-
-/* Analysis Grid */
-.analysis-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-lg);
-}
-
-.full-width {
-  grid-column: 1 / -1;
-}
-
-/* List Items */
-.list-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.list-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-primary);
-  border: 3px solid var(--neo-black);
-  transition: all var(--transition-fast);
-}
-
-.list-item:hover {
-  background: var(--neo-yellow);
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0 var(--neo-black);
-}
-
-.rank {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--neo-black);
-  color: var(--neo-white);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.item-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.item-meta {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.empty-list {
-  padding: var(--spacing-lg);
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-/* Co-Change Grid */
-.cochange-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-sm);
-}
-
-.cochange-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-primary);
-  border: 3px solid var(--neo-black);
-  transition: all var(--transition-fast);
-}
-
-.cochange-item:hover {
-  background: var(--neo-yellow);
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0 var(--neo-black);
-}
-
-.cochange-item code {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.75rem;
-  background: var(--neo-white);
-}
-
-.cochange-arrow {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-</style>

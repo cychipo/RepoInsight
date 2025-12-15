@@ -1,574 +1,237 @@
 /* =============================================
-   RepoInsight - Neo-Brutalism Design System
+   RepoInsight - Neo-Brutalism Design System (Tailwind)
    ============================================= */
 
-/* Import Google Fonts - Bold, chunky typography */
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
-/* CSS Variables - Neo-Brutalism Palette */
-:root {
-  /* Core Colors - Vibrant & Bold */
-  --neo-black: #000000;
-  --neo-white: #fffef2;
-  --neo-cream: #fff8e7;
+@import "tailwindcss";
+@config "../../tailwind.config.js";
 
-  /* Primary Palette */
-  --neo-yellow: #ffe500;
-  --neo-pink: #ff6b9d;
-  --neo-blue: #00d4ff;
-  --neo-green: #7cff6b;
-  --neo-purple: #c792ff;
-  --neo-orange: #ff9e2c;
-  --neo-red: #ff4757;
+/* @tailwind base; - Replaced by @import */
+/* @tailwind components; - Replaced by @import */
+/* @tailwind utilities; - Replaced by @import */
 
-  /* Background variations */
-  --bg-primary: var(--neo-cream);
-  --bg-secondary: var(--neo-white);
-  --bg-accent: var(--neo-yellow);
+@layer base {
+  html {
+    @apply h-full antialiased bg-neo-cream text-neo-black;
+    font-family: "Space Grotesk", sans-serif;
+  }
+  body {
+    @apply h-full;
+  }
+  #app {
+    @apply h-full flex flex-col;
+  }
 
-  /* Text */
-  --text-primary: var(--neo-black);
-  --text-secondary: #333333;
-  --text-muted: #666666;
+  /* Typography - Bold & Chunky */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold uppercase tracking-tight text-neo-black leading-tight;
+  }
 
-  /* Node colors for graph */
-  --node-commit: var(--neo-blue);
-  --node-file: var(--neo-green);
-  --node-function: var(--neo-orange);
+  h1 {
+    @apply text-4xl;
+  }
+  h2 {
+    @apply text-3xl;
+  }
+  h3 {
+    @apply text-xl;
+  }
+  h4 {
+    @apply text-lg;
+  }
 
-  /* Neo-Brutalism Borders & Shadows */
-  --border-width: 3px;
-  --border-color: var(--neo-black);
-  --shadow-offset: 4px;
-  --shadow-brutal: var(--shadow-offset) var(--shadow-offset) 0 var(--neo-black);
-  --shadow-brutal-lg: 6px 6px 0 var(--neo-black);
-  --shadow-brutal-hover: 6px 6px 0 var(--neo-black);
+  p {
+    @apply font-medium text-stone-600;
+  }
 
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
+  a {
+    @apply underline underline-offset-4 decoration-2 transition-all duration-100 text-neo-black;
+  }
+  a:hover {
+    @apply bg-neo-yellow;
+  }
 
-  /* Border radius - mostly 0 or very small for brutalism */
-  --radius-sm: 0;
-  --radius-md: 4px;
-  --radius-lg: 8px;
+  code,
+  pre {
+    @apply font-mono text-[0.9em] font-medium;
+  }
 
-  /* Transitions */
-  --transition-fast: 100ms ease;
-  --transition-normal: 200ms ease;
-
-  /* Font */
-  --font-sans: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Base */
-html,
-body {
-  height: 100%;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  -webkit-font-smoothing: antialiased;
-}
-
-#app {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Typography - Bold & Chunky */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-}
-
-h1 {
-  font-size: 2.5rem;
-}
-h2 {
-  font-size: 1.75rem;
-}
-h3 {
-  font-size: 1.25rem;
-}
-h4 {
-  font-size: 1.1rem;
-}
-
-p {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-a {
-  color: var(--text-primary);
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-  transition: all var(--transition-fast);
-}
-
-a:hover {
-  background: var(--neo-yellow);
-}
-
-code,
-pre {
-  font-family: var(--font-mono);
-  font-size: 0.9em;
-  font-weight: 500;
-}
-
-code {
-  background: var(--neo-yellow);
-  padding: 0.15rem 0.4rem;
-  border: 2px solid var(--neo-black);
-}
-
-/* ==========================================
-   Neo-Brutalism Buttons
-   ========================================== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  border: var(--border-width) solid var(--border-color);
-  background: var(--neo-white);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-brutal);
-  text-decoration: none;
-}
-
-.btn:hover:not(:disabled) {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-brutal-hover);
-}
-
-.btn:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--neo-black);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: var(--neo-yellow);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--neo-pink);
-}
-
-.btn-secondary {
-  background: var(--neo-white);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--neo-blue);
-}
-
-.btn-danger {
-  background: var(--neo-red);
-  color: var(--neo-white);
-}
-
-.btn-success {
-  background: var(--neo-green);
-}
-
-.btn-ghost {
-  background: transparent;
-  border: 2px solid var(--neo-black);
-  box-shadow: none;
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: var(--neo-yellow);
-  box-shadow: var(--shadow-brutal);
-}
-
-.btn-lg {
-  padding: var(--spacing-md) var(--spacing-xl);
-  font-size: 1rem;
-}
-
-.btn-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-}
-
-/* ==========================================
-   Neo-Brutalism Cards
-   ========================================== */
-.card {
-  background: var(--neo-white);
-  border: var(--border-width) solid var(--border-color);
-  padding: var(--spacing-lg);
-  box-shadow: var(--shadow-brutal);
-  transition: all var(--transition-fast);
-}
-
-.card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-brutal-lg);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 3px solid var(--neo-black);
-}
-
-.card-title {
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.card-accent-yellow {
-  border-left: 8px solid var(--neo-yellow);
-}
-.card-accent-pink {
-  border-left: 8px solid var(--neo-pink);
-}
-.card-accent-blue {
-  border-left: 8px solid var(--neo-blue);
-}
-.card-accent-green {
-  border-left: 8px solid var(--neo-green);
-}
-.card-accent-orange {
-  border-left: 8px solid var(--neo-orange);
-}
-
-/* ==========================================
-   Neo-Brutalism Inputs
-   ========================================== */
-.input {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  background: var(--neo-white);
-  border: var(--border-width) solid var(--border-color);
-  outline: none;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-brutal);
-}
-
-.input:focus {
-  background: var(--neo-yellow);
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-brutal-hover);
-}
-
-.input::placeholder {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-/* ==========================================
-   Neo-Brutalism Badges
-   ========================================== */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  border: 2px solid var(--neo-black);
-  background: var(--neo-white);
-}
-
-.badge-primary {
-  background: var(--neo-blue);
-}
-
-.badge-success {
-  background: var(--neo-green);
-}
-
-.badge-warning {
-  background: var(--neo-orange);
-}
-
-.badge-danger {
-  background: var(--neo-red);
-  color: var(--neo-white);
-}
-
-.badge-yellow {
-  background: var(--neo-yellow);
-}
-
-.badge-pink {
-  background: var(--neo-pink);
-}
-
-/* ==========================================
-   Stats
-   ========================================== */
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-md);
-  background: var(--neo-white);
-  border: 3px solid var(--neo-black);
-  box-shadow: var(--shadow-brutal);
-}
-
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-/* ==========================================
-   Progress Bar
-   ========================================== */
-.progress {
-  width: 100%;
-  height: 1.5rem;
-  background: var(--neo-white);
-  border: 3px solid var(--neo-black);
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: repeating-linear-gradient(
-    45deg,
-    var(--neo-yellow),
-    var(--neo-yellow) 10px,
-    var(--neo-black) 10px,
-    var(--neo-black) 20px
-  );
-  transition: width var(--transition-normal);
-}
-
-/* ==========================================
-   Loader
-   ========================================== */
-.loader {
-  width: 2rem;
-  height: 2rem;
-  border: 4px solid var(--neo-black);
-  border-top-color: var(--neo-yellow);
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  code {
+    @apply bg-neo-yellow px-1 py-0.5 border-2 border-neo-black;
   }
 }
 
-/* ==========================================
-   Scrollbar - Neo-Brutalism Style
-   ========================================== */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-  border-left: 3px solid var(--neo-black);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--neo-yellow);
-  border: 3px solid var(--neo-black);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--neo-pink);
-}
-
-/* ==========================================
-   Utilities
-   ========================================== */
-.flex {
-  display: flex;
-}
-.flex-col {
-  flex-direction: column;
-}
-.items-center {
-  align-items: center;
-}
-.justify-center {
-  justify-content: center;
-}
-.justify-between {
-  justify-content: space-between;
-}
-
-.gap-1 {
-  gap: var(--spacing-xs);
-}
-.gap-2 {
-  gap: var(--spacing-sm);
-}
-.gap-3 {
-  gap: var(--spacing-md);
-}
-.gap-4 {
-  gap: var(--spacing-lg);
-}
-.gap-5 {
-  gap: var(--spacing-xl);
-}
-
-.text-center {
-  text-align: center;
-}
-.text-muted {
-  color: var(--text-muted);
-}
-.text-sm {
-  font-size: 0.875rem;
-}
-.text-xs {
-  font-size: 0.75rem;
-}
-
-.font-mono {
-  font-family: var(--font-mono);
-}
-.font-medium {
-  font-weight: 500;
-}
-.font-semibold {
-  font-weight: 600;
-}
-.font-bold {
-  font-weight: 700;
-}
-
-.uppercase {
-  text-transform: uppercase;
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Highlight text with marker effect */
-.highlight {
-  background: linear-gradient(180deg, transparent 50%, var(--neo-yellow) 50%);
-  padding: 0 4px;
-}
-
-.highlight-pink {
-  background: linear-gradient(180deg, transparent 50%, var(--neo-pink) 50%);
-}
-
-.highlight-blue {
-  background: linear-gradient(180deg, transparent 50%, var(--neo-blue) 50%);
-}
-
-/* ==========================================
-   Animations
-   ========================================== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-2
+           font-sans text-sm font-bold uppercase tracking-wider
+           border-3 border-neo-black bg-neo-white text-neo-black
+           shadow-brutal transition-all duration-100 cursor-pointer no-underline;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .btn:hover:not(:disabled) {
+    @apply -translate-x-[2px] -translate-y-[2px] shadow-brutal-hover;
+  }
+
+  .btn:active:not(:disabled) {
+    @apply translate-x-[2px] translate-y-[2px] shadow-brutal-active;
+  }
+
+  .btn:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-neo-yellow;
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply bg-neo-pink;
+  }
+
+  .btn-secondary {
+    @apply bg-neo-white;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    @apply bg-neo-blue;
+  }
+
+  .btn-danger {
+    @apply bg-neo-red text-neo-white;
+  }
+
+  .btn-success {
+    @apply bg-neo-green;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent border-2 shadow-none;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    @apply bg-neo-yellow shadow-brutal;
+  }
+
+  .btn-lg {
+    @apply px-8 py-4 text-base;
+  }
+
+  .btn-icon {
+    @apply w-10 h-10 p-0;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-neo-white border-3 border-neo-black p-6 shadow-brutal transition-all duration-100;
+  }
+
+  .card:hover {
+    @apply -translate-x-[2px] -translate-y-[2px] shadow-brutal-lg;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between mb-4 pb-4 border-b-3 border-neo-black;
+  }
+
+  .card-title {
+    @apply text-base font-bold uppercase;
+  }
+
+  .card-accent-yellow {
+    @apply border-l-[8px] border-l-neo-yellow;
+  }
+  .card-accent-pink {
+    @apply border-l-[8px] border-l-neo-pink;
+  }
+  .card-accent-blue {
+    @apply border-l-[8px] border-l-neo-blue;
+  }
+  .card-accent-green {
+    @apply border-l-[8px] border-l-neo-green;
+  }
+  .card-accent-orange {
+    @apply border-l-[8px] border-l-neo-orange;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full px-4 py-2 font-sans text-sm font-medium text-neo-black bg-neo-white
+           border-3 border-neo-black outline-none transition-all duration-100 shadow-brutal;
+  }
+
+  .input:focus {
+    @apply bg-neo-yellow -translate-x-[2px] -translate-y-[2px] shadow-brutal-hover;
+  }
+
+  .input::placeholder {
+    @apply text-stone-500 font-medium;
+  }
+
+  .select-input {
+    @apply px-4 py-2 font-sans text-xs font-bold border-3 border-neo-black bg-neo-white cursor-pointer min-w-[150px];
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-bold uppercase tracking-wide
+           border-2 border-neo-black bg-neo-white;
+  }
+
+  .badge-primary {
+    @apply bg-neo-blue;
+  }
+  .badge-success {
+    @apply bg-neo-green;
+  }
+  .badge-warning {
+    @apply bg-neo-orange;
+  }
+  .badge-danger {
+    @apply bg-neo-red text-neo-white;
+  }
+  .badge-yellow {
+    @apply bg-neo-yellow;
+  }
+  .badge-pink {
+    @apply bg-neo-pink;
+  }
+
+  /* Loader */
+  .loader {
+    @apply w-8 h-8 border-4 border-neo-black border-t-neo-yellow animate-spin;
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
+/* Scrollbar */
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
   }
-  50% {
-    transform: translateY(-10px);
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neo-cream border-l-3 border-neo-black;
   }
-}
 
-.animate-bounce {
-  animation: bounce 0.5s ease infinite;
-}
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neo-yellow border-3 border-neo-black;
+  }
 
-/* Staggered animation for lists */
-.stagger-1 {
-  animation-delay: 0.1s;
-}
-.stagger-2 {
-  animation-delay: 0.2s;
-}
-.stagger-3 {
-  animation-delay: 0.3s;
-}
-.stagger-4 {
-  animation-delay: 0.4s;
-}
-.stagger-5 {
-  animation-delay: 0.5s;
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neo-pink;
+  }
+
+  .highlight {
+    background: linear-gradient(180deg, transparent 50%, #ffe500 50%);
+    @apply px-1;
+  }
+
+  .truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
 }

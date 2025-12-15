@@ -140,12 +140,25 @@ export interface KnowledgeGraph {
   edges: GraphEdge[];
 }
 
-export interface GraphNode {
-  id: string;
-  type: "commit" | "file" | "function";
-  label: string;
-  metadata: CommitMetadata | FileMetadata | FunctionMetadata;
-}
+export type GraphNode =
+  | {
+      id: string;
+      type: "commit";
+      label: string;
+      metadata: CommitMetadata;
+    }
+  | {
+      id: string;
+      type: "file";
+      label: string;
+      metadata: FileMetadata;
+    }
+  | {
+      id: string;
+      type: "function";
+      label: string;
+      metadata: FunctionMetadata;
+    };
 
 export interface GraphEdge {
   id: string;
