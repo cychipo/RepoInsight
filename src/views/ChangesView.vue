@@ -37,7 +37,7 @@
       >
     </div>
 
-    <!-- No Changes -->
+    <!-- No Changes - Ready to Push -->
     <div
       v-else-if="repositoryStore.gitStatus.length === 0"
       class="flex flex-col items-center justify-center p-12 text-center gap-4 card">
@@ -46,6 +46,13 @@
       <p class="font-medium text-stone-600">
         Thư mục làm việc sạch sẽ. Tất cả thay đổi đã được commit.
       </p>
+      <button
+        class="btn btn-primary bg-neo-purple"
+        @click="handlePush"
+        :disabled="isPushing">
+        <Cloud v-if="!isPushing" :size="14" class="inline" />
+        {{ isPushing ? "ĐANG PUSH..." : "PUSH LÊN REMOTE" }}
+      </button>
     </div>
 
     <!-- Smart Commit Section -->
@@ -383,6 +390,7 @@ const isRebasing = ref(false);
 const isStaging = ref(false);
 const isCommitting = ref(false);
 const isGenerating = ref(false);
+const isPushing = ref(false);
 const commitMessage = ref("");
 
 const stagedChanges = computed(() => {
@@ -456,7 +464,7 @@ async function handleGenerateMessage() {
     const prompt = `Based on the following git diff, generate a concise and descriptive commit message in Conventional Commits format (e.g., feat: ..., fix: ...). Only return the message, no quotes or markdown code blocks.\n\nDiff:\n${diff}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite", // Using the model requested by user
+      model: "gemini-2.5-flash-lite",
       contents: prompt,
     });
 
@@ -510,7 +518,7 @@ async function handleCommit() {
 async function handlePush() {
   if (!repositoryStore.currentRepository) return;
 
-  isCommitting.value = true; // reusing existing loading state variable
+  isPushing.value = true;
   try {
     const result = await window.electronAPI.push(
       repositoryStore.currentRepository
@@ -523,7 +531,7 @@ async function handlePush() {
   } catch (e) {
     alert("Lỗi push: " + e);
   } finally {
-    isCommitting.value = false;
+    isPushing.value = false;
   }
 }
 
