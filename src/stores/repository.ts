@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { Commit, RepositoryInfo, FileChange } from "@/types";
+import { useGraphStore } from "./graph";
 
 export const useRepositoryStore = defineStore("repository", () => {
   // State
@@ -76,11 +77,42 @@ export const useRepositoryStore = defineStore("repository", () => {
         currentRepository.value,
         500
       );
+
+      // Auto-trigger analysis to populate graph data
+      await runAnalysis();
     } catch (e) {
       error.value =
         e instanceof Error ? e.message : "Failed to load repository data";
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  async function runAnalysis(): Promise<void> {
+    if (!currentRepository.value) return;
+
+    const graphStore = useGraphStore();
+
+    try {
+      // Set up progress listener
+      window.electronAPI.onAnalysisProgress((progress) => {
+        analysisProgress.value = {
+          ...progress,
+          message: progress.message.toUpperCase(),
+        };
+      });
+
+      const result = await window.electronAPI.analyzeRepository(
+        currentRepository.value
+      );
+
+      if (result.success) {
+        graphStore.setGraph(result.graph);
+      }
+    } catch (e) {
+      console.error("Analysis failed:", e);
+    } finally {
+      window.electronAPI.removeAnalysisProgressListener();
     }
   }
 
@@ -127,6 +159,7 @@ export const useRepositoryStore = defineStore("repository", () => {
     // Actions
     selectRepository,
     loadRepositoryData,
+    runAnalysis,
     getFileChanges,
     setAnalysisProgress,
     clearRepository,

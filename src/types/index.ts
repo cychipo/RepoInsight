@@ -15,6 +15,7 @@ export interface ElectronAPI {
     commitHash: string
   ) => Promise<FileChange[]>;
   getRepositoryInfo: (repoPath: string) => Promise<RepositoryInfo>;
+  getGitGraph: (repoPath: string, limit?: number) => Promise<GitGraphCommit[]>;
 
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
@@ -54,6 +55,18 @@ export interface RepositoryInfo {
   totalContributors: number;
   firstCommitDate: Date;
   lastCommitDate: Date;
+}
+
+// Git Graph types for branch visualization
+export interface GitGraphCommit {
+  hash: string;
+  shortHash: string;
+  author: string;
+  authorEmail: string;
+  date: Date;
+  message: string;
+  parentHashes: string[];
+  refs: string[]; // branch names, tags, etc.
 }
 
 // Analysis types
