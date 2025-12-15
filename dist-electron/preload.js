@@ -14,6 +14,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   getBranches: (repoPath) => electron.ipcRenderer.invoke("git:getBranches", repoPath),
   getStatus: (repoPath) => electron.ipcRenderer.invoke("git:getStatus", repoPath),
   checkoutBranch: (repoPath, branchName) => electron.ipcRenderer.invoke("git:checkoutBranch", repoPath, branchName),
+  rebase: (repoPath) => electron.ipcRenderer.invoke("git:rebase", repoPath),
   // Analysis operations
   analyzeRepository: (repoPath) => electron.ipcRenderer.invoke("analysis:analyzeRepository", repoPath),
   getAnalysisProgress: () => electron.ipcRenderer.invoke("analysis:getProgress"),

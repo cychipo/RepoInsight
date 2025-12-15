@@ -568,6 +568,56 @@ function registerGitHandlers() {
     }
   );
   electron.ipcMain.handle(
+    "git:rebase",
+    async (_, repoPath) => {
+      let stashed = false;
+      try {
+        const statusOutput = await runGitCommand(repoPath, "status --porcelain");
+        const isDirty = statusOutput.trim().length > 0;
+        if (isDirty) {
+          await runGitCommand(
+            repoPath,
+            'stash push -u -m "Auto stash by RepoInsight"'
+          );
+          stashed = true;
+        }
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+        await runGitCommand(
+          repoPath,
+          `pull --rebase origin ${currentBranch.trim()}`
+        );
+        if (stashed) {
+          try {
+            await runGitCommand(repoPath, "stash pop");
+          } catch (e) {
+            console.warn("Stash pop conflict:", e);
+            return {
+              success: true,
+              message: "Đã rebase thành công, nhưng có xung đột khi khôi phục stash. Vui lòng kiểm tra và giải quyết xung đột.",
+              stashed: true,
+              conflict: true
+            };
+          }
+        }
+        return {
+          success: true,
+          message: stashed ? "Đã rebase và khôi phục thay đổi thành công!" : "Đã rebase thành công!",
+          stashed
+        };
+      } catch (error) {
+        console.error("Rebase failed:", error);
+        return {
+          success: false,
+          message: error.message || "Rebase thất bại. Vui lòng kiểm tra log.",
+          stashed
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
     "git:checkoutBranch",
     async (_, repoPath, branchName) => {
       try {
