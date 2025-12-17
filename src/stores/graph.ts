@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import type { KnowledgeGraph, GraphNode, GraphEdge } from "@/types";
+import type {
+  KnowledgeGraph,
+  GraphNode,
+  GraphEdge,
+  FileOwnership,
+} from "@/types";
 
 export const useGraphStore = defineStore("graph", () => {
   // State
@@ -170,6 +175,19 @@ export const useGraphStore = defineStore("graph", () => {
       .slice(0, 20);
   }
 
+  // Get file ownership data
+  async function getFileOwnership(
+    repoPath: string,
+    filePath: string
+  ): Promise<FileOwnership | null> {
+    try {
+      return await window.electronAPI.getFileOwnership(repoPath, filePath);
+    } catch (error) {
+      console.error("Failed to get file ownership:", error);
+      return null;
+    }
+  }
+
   return {
     // State
     graph,
@@ -196,5 +214,6 @@ export const useGraphStore = defineStore("graph", () => {
     getHotspotFunctions,
     getCoChangePatterns,
     getFileHotspotScore,
+    getFileOwnership,
   };
 });

@@ -30,6 +30,8 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   // Analysis operations
   analyzeRepository: (repoPath) => electron.ipcRenderer.invoke("analysis:analyzeRepository", repoPath),
   getAnalysisProgress: () => electron.ipcRenderer.invoke("analysis:getProgress"),
+  getFileOwnership: (repoPath, filePath) => electron.ipcRenderer.invoke("git:getFileOwnership", repoPath, filePath),
+  getEvolutionData: (repoPath, months) => electron.ipcRenderer.invoke("git:getEvolutionData", repoPath, months),
   // Event listeners for progress updates
   onAnalysisProgress: (callback) => {
     electron.ipcRenderer.on("analysis:progress", (_, progress) => callback(progress));

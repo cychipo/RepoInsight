@@ -892,6 +892,28 @@ function registerGitHandlers() {
       }
     }
   );
+  electron.ipcMain.handle(
+    "git:getFileOwnership",
+    async (_, repoPath, filePath) => {
+      try {
+        return await getFileOwnership(repoPath, filePath);
+      } catch (error) {
+        console.error("Failed to get file ownership:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getEvolutionData",
+    async (_, repoPath, months = 12) => {
+      try {
+        return await getEvolutionData(repoPath, months);
+      } catch (error) {
+        console.error("Failed to get evolution data:", error);
+        throw error;
+      }
+    }
+  );
 }
 function getStatusLabel(code) {
   const statusMap = {
@@ -986,6 +1008,204 @@ function extractFunctions(content) {
     }
   }
   return functions;
+}
+async function getFileOwnership(repoPath, filePath) {
+  try {
+    const output = await runGitCommand(
+      repoPath,
+      `log --follow --format="%H|%an|%ae|%aI" --numstat -- "${filePath}"`
+    );
+    const lines = output.split("\n").filter((l) => l.trim());
+    const ownerMap = /* @__PURE__ */ new Map();
+    let totalCommits = 0;
+    let lastModified = null;
+    let currentCommit = null;
+    for (const line of lines) {
+      if (line.includes("|")) {
+        const parts = line.split("|");
+        if (parts.length === 4) {
+          currentCommit = {
+            author: parts[1],
+            email: parts[2],
+            date: new Date(parts[3])
+          };
+          totalCommits++;
+          if (!lastModified || currentCommit.date > lastModified) {
+            lastModified = currentCommit.date;
+          }
+          const key = currentCommit.email;
+          if (!ownerMap.has(key)) {
+            ownerMap.set(key, {
+              author: currentCommit.author,
+              authorEmail: currentCommit.email,
+              commits: 0,
+              linesAdded: 0,
+              linesDeleted: 0
+            });
+          }
+          const stats = ownerMap.get(key);
+          stats.commits++;
+        }
+      } else if (currentCommit && line.match(/^\d+\s+\d+/)) {
+        const parts = line.split(/\s+/);
+        if (parts.length >= 2) {
+          const additions = parts[0] === "-" ? 0 : parseInt(parts[0], 10);
+          const deletions = parts[1] === "-" ? 0 : parseInt(parts[1], 10);
+          const key = currentCommit.email;
+          const stats = ownerMap.get(key);
+          stats.linesAdded += additions;
+          stats.linesDeleted += deletions;
+        }
+      }
+    }
+    const owners = Array.from(ownerMap.values()).map((stats) => ({
+      author: stats.author,
+      authorEmail: stats.authorEmail,
+      commits: stats.commits,
+      percentage: totalCommits > 0 ? stats.commits / totalCommits * 100 : 0,
+      linesAdded: stats.linesAdded,
+      linesDeleted: stats.linesDeleted
+    })).sort((a, b) => b.commits - a.commits);
+    return {
+      filePath,
+      owners,
+      totalCommits,
+      lastModified: lastModified || /* @__PURE__ */ new Date()
+    };
+  } catch (error) {
+    console.error("Failed to get file ownership:", error);
+    throw error;
+  }
+}
+async function getEvolutionData(repoPath, months = 12) {
+  try {
+    const now = /* @__PURE__ */ new Date();
+    const since = new Date(now);
+    since.setMonth(since.getMonth() - months);
+    const sinceStr = since.toISOString().split("T")[0];
+    const output = await runGitCommand(
+      repoPath,
+      `log --since="${sinceStr}" --format="%H|%an|%ae|%aI" --numstat --no-merges`
+    );
+    const lines = output.split("\n").filter((l) => l.trim());
+    const timelineMap = /* @__PURE__ */ new Map();
+    const authorMap = /* @__PURE__ */ new Map();
+    const fileTypeMap = /* @__PURE__ */ new Map();
+    const churnMap = /* @__PURE__ */ new Map();
+    let currentCommit = null;
+    for (const line of lines) {
+      if (line.includes("|")) {
+        const parts = line.split("|");
+        if (parts.length === 4) {
+          const commitDate = new Date(parts[3]);
+          currentCommit = {
+            hash: parts[0],
+            author: parts[1],
+            email: parts[2],
+            date: commitDate
+          };
+          const dateKey = commitDate.toISOString().split("T")[0];
+          if (!timelineMap.has(dateKey)) {
+            timelineMap.set(dateKey, {
+              commits: 0,
+              files: /* @__PURE__ */ new Set(),
+              linesAdded: 0,
+              linesDeleted: 0,
+              contributors: /* @__PURE__ */ new Set()
+            });
+          }
+          const dayData = timelineMap.get(dateKey);
+          dayData.commits++;
+          dayData.contributors.add(currentCommit.email);
+          if (!churnMap.has(dateKey)) {
+            churnMap.set(dateKey, { additions: 0, deletions: 0 });
+          }
+          const authorKey = currentCommit.email;
+          if (!authorMap.has(authorKey)) {
+            authorMap.set(authorKey, {
+              author: currentCommit.author,
+              authorEmail: currentCommit.email,
+              firstCommit: commitDate,
+              lastCommit: commitDate,
+              totalCommits: 0,
+              linesAdded: 0,
+              linesDeleted: 0
+            });
+          }
+          const authorStats = authorMap.get(authorKey);
+          authorStats.totalCommits++;
+          if (commitDate < authorStats.firstCommit) {
+            authorStats.firstCommit = commitDate;
+          }
+          if (commitDate > authorStats.lastCommit) {
+            authorStats.lastCommit = commitDate;
+          }
+        }
+      } else if (currentCommit && line.match(/^\d+\s+\d+/)) {
+        const parts = line.split(/\s+/);
+        if (parts.length >= 3) {
+          const additions = parts[0] === "-" ? 0 : parseInt(parts[0], 10);
+          const deletions = parts[1] === "-" ? 0 : parseInt(parts[1], 10);
+          const filePath = parts.slice(2).join(" ");
+          const dateKey = currentCommit.date.toISOString().split("T")[0];
+          const dayData = timelineMap.get(dateKey);
+          dayData.files.add(filePath);
+          dayData.linesAdded += additions;
+          dayData.linesDeleted += deletions;
+          const churnData = churnMap.get(dateKey);
+          churnData.additions += additions;
+          churnData.deletions += deletions;
+          const authorStats = authorMap.get(currentCommit.email);
+          authorStats.linesAdded += additions;
+          authorStats.linesDeleted += deletions;
+          const ext = path.extname(filePath) || "no-ext";
+          if (!fileTypeMap.has(ext)) {
+            fileTypeMap.set(ext, {
+              count: 0,
+              linesAdded: 0,
+              linesDeleted: 0
+            });
+          }
+          const fileTypeStats = fileTypeMap.get(ext);
+          fileTypeStats.count++;
+          fileTypeStats.linesAdded += additions;
+          fileTypeStats.linesDeleted += deletions;
+        }
+      }
+    }
+    const timeline = Array.from(timelineMap.entries()).map(([date, data]) => ({
+      date: new Date(date),
+      commits: data.commits,
+      files: data.files.size,
+      linesAdded: data.linesAdded,
+      linesDeleted: data.linesDeleted,
+      contributors: data.contributors.size
+    })).sort((a, b) => a.date.getTime() - b.date.getTime());
+    const authors = Array.from(authorMap.values()).sort(
+      (a, b) => b.totalCommits - a.totalCommits
+    );
+    const fileTypes = Array.from(fileTypeMap.entries()).map(([extension, stats]) => ({
+      extension,
+      count: stats.count,
+      linesAdded: stats.linesAdded,
+      linesDeleted: stats.linesDeleted
+    })).sort((a, b) => b.count - a.count);
+    const codeChurn = Array.from(churnMap.entries()).map(([date, data]) => ({
+      date: new Date(date),
+      additions: data.additions,
+      deletions: data.deletions,
+      netChange: data.additions - data.deletions
+    })).sort((a, b) => a.date.getTime() - b.date.getTime());
+    return {
+      timeline,
+      authors,
+      fileTypes,
+      codeChurn
+    };
+  } catch (error) {
+    console.error("Failed to get evolution data:", error);
+    throw error;
+  }
 }
 const execAsync = util.promisify(child_process.exec);
 function registerSettingsHandlers() {

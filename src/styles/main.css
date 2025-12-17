@@ -157,6 +157,9 @@
   .card-accent-orange {
     @apply border-l-[8px] border-l-neo-orange;
   }
+  .card-accent-purple {
+    @apply border-l-[8px] border-l-neo-purple;
+  }
 
   /* Inputs */
   .input {
@@ -199,6 +202,12 @@
   }
   .badge-pink {
     @apply bg-neo-pink;
+  }
+  .badge-purple {
+    @apply bg-neo-purple;
+  }
+  .badge-sm {
+    @apply px-1 py-0.5 text-[0.65rem];
   }
 
   /* Loader */
