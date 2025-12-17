@@ -76,6 +76,14 @@ export interface ElectronAPI {
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
   getAnalysisProgress: () => Promise<AnalysisProgress>;
+  getFileOwnership: (
+    repoPath: string,
+    filePath: string
+  ) => Promise<FileOwnership>;
+  getEvolutionData: (
+    repoPath: string,
+    months?: number
+  ) => Promise<EvolutionData>;
 
   // Event listeners
   onAnalysisProgress: (callback: (progress: AnalysisProgress) => void) => void;
@@ -237,6 +245,64 @@ export interface FunctionMetadata {
   endLine: number;
   parameters: string[];
   modifyCount: number;
+}
+
+// Code Ownership types
+export interface FileOwnership {
+  filePath: string;
+  owners: OwnerInfo[];
+  totalCommits: number;
+  lastModified: Date;
+}
+
+export interface OwnerInfo {
+  author: string;
+  authorEmail: string;
+  commits: number;
+  percentage: number;
+  linesAdded: number;
+  linesDeleted: number;
+}
+
+// Repository Evolution types
+export interface EvolutionData {
+  timeline: EvolutionPoint[];
+  authors: AuthorEvolution[];
+  fileTypes: FileTypeEvolution[];
+  codeChurn: ChurnData[];
+}
+
+export interface EvolutionPoint {
+  date: Date;
+  commits: number;
+  files: number;
+  linesAdded: number;
+  linesDeleted: number;
+  contributors: number;
+}
+
+export interface AuthorEvolution {
+  author: string;
+  authorEmail: string;
+  firstCommit: Date;
+  lastCommit: Date;
+  totalCommits: number;
+  linesAdded: number;
+  linesDeleted: number;
+}
+
+export interface FileTypeEvolution {
+  extension: string;
+  count: number;
+  linesAdded: number;
+  linesDeleted: number;
+}
+
+export interface ChurnData {
+  date: Date;
+  additions: number;
+  deletions: number;
+  netChange: number;
 }
 
 declare global {

@@ -7,7 +7,10 @@
         class="btn btn-primary"
         @click="runAnalysis"
         :disabled="isAnalyzing">
-        <span v-if="!isAnalyzing">⚡ CHẠY PHÂN TÍCH</span>
+        <span v-if="!isAnalyzing" class="flex items-center gap-2">
+          <Zap :size="16" />
+          CHẠY PHÂN TÍCH
+        </span>
         <span v-else class="flex items-center gap-2">
           <span class="loader" style="width: 18px; height: 18px"></span>
           ĐANG PHÂN TÍCH...
@@ -85,7 +88,10 @@
         <div class="card card-accent-pink">
           <div
             class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
-            <h3 class="text-lg font-bold m-0">★ TỆP RỦI RO CAO</h3>
+            <h3 class="text-lg font-bold m-0 flex items-center gap-2">
+              <Flame :size="20" />
+              TỆP RỦI RO CAO
+            </h3>
             <span class="badge badge-pink">HOTSPOT SCORE</span>
           </div>
           <div class="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
@@ -130,7 +136,10 @@
         <div class="card card-accent-orange">
           <div
             class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
-            <h3 class="text-lg font-bold m-0">⚡ HÀM THAY ĐỔI NHIỀU</h3>
+            <h3 class="text-lg font-bold m-0 flex items-center gap-2">
+              <AlertTriangle :size="20" />
+              HÀM THAY ĐỔI NHIỀU
+            </h3>
             <span class="badge badge-warning">THAY ĐỔI THƯỜNG XUYÊN</span>
           </div>
           <div class="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
@@ -166,7 +175,10 @@
         <div class="card card-accent-blue col-span-full">
           <div
             class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
-            <h3 class="text-lg font-bold m-0">◈ MẪU ĐỒNG THAY ĐỔI</h3>
+            <h3 class="text-lg font-bold m-0 flex items-center gap-2">
+              <Link2 :size="20" />
+              MẪU ĐỒNG THAY ĐỔI
+            </h3>
             <span class="badge badge-primary">TỆP THAY ĐỔI CÙNG NHAU</span>
           </div>
           <div
@@ -191,6 +203,120 @@
             </div>
           </div>
         </div>
+
+        <!-- File Ownership Section -->
+        <div class="card card-accent-purple col-span-full">
+          <div
+            class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
+            <h3 class="text-lg font-bold m-0 flex items-center gap-2">
+              <Users :size="20" />
+              PHÂN TÍCH CHỦ SỞ HỮU TỆP
+            </h3>
+            <span class="badge badge-purple">CODE OWNERSHIP</span>
+          </div>
+
+          <!-- File selection for ownership -->
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-4">
+              <label class="text-xs font-bold tracking-wider">CHỌN TỆP:</label>
+              <select
+                v-model="selectedFileForOwnership"
+                @change="loadFileOwnership"
+                class="flex-1 px-4 py-2 font-sans text-xs font-bold border-3 border-neo-black bg-neo-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed outline-none focus:bg-neo-yellow focus:shadow-brutal">
+                <option value="">-- CHỌN MỘT TỆP --</option>
+                <option
+                  v-for="file in fileNodes"
+                  :key="file.id"
+                  :value="(file.metadata as any).path">
+                  {{ (file.metadata as any).path }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Ownership Details -->
+            <div
+              v-if="fileOwnership && loadingOwnership === false"
+              class="flex flex-col gap-3">
+              <div
+                class="flex items-center justify-between p-3 bg-neo-yellow border-3 border-neo-black">
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold text-stone-500">TỆP</span>
+                  <code class="text-sm font-bold">{{
+                    fileOwnership.filePath
+                  }}</code>
+                </div>
+                <div class="flex gap-6">
+                  <div class="flex flex-col items-center">
+                    <span class="text-2xl font-bold">{{
+                      fileOwnership.totalCommits
+                    }}</span>
+                    <span class="text-xs font-bold">COMMITS</span>
+                  </div>
+                  <div class="flex flex-col items-center">
+                    <span class="text-xs font-bold text-stone-500"
+                      >CẬP NHẬT</span
+                    >
+                    <span class="text-xs font-semibold">{{
+                      formatDate(fileOwnership.lastModified)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Owners List -->
+              <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+                <div
+                  v-for="(owner, index) in fileOwnership.owners"
+                  :key="owner.authorEmail"
+                  class="flex items-center gap-4 p-3 bg-neo-white border-3 border-neo-black">
+                  <span
+                    class="w-8 h-8 flex items-center justify-center bg-neo-black text-neo-white text-sm font-bold flex-shrink-0">
+                    {{ index + 1 }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-bold truncate">
+                      {{ owner.author }}
+                    </div>
+                    <div class="text-xs text-stone-500 truncate">
+                      {{ owner.authorEmail }}
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end gap-1">
+                    <div class="flex items-center gap-2">
+                      <span class="badge badge-primary"
+                        >{{ owner.commits }} commits</span
+                      >
+                      <span class="text-sm font-bold"
+                        >{{ owner.percentage.toFixed(1) }}%</span
+                      >
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                      <span class="text-neo-green font-semibold"
+                        >+{{ owner.linesAdded }}</span
+                      >
+                      <span class="text-neo-red font-semibold"
+                        >-{{ owner.linesDeleted }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="loadingOwnership"
+              class="flex items-center justify-center gap-3 p-8">
+              <span class="loader" style="width: 24px; height: 24px"></span>
+              <span class="text-sm font-bold">ĐANG TẢI DỮ LIỆU...</span>
+            </div>
+
+            <div
+              v-if="!selectedFileForOwnership && !loadingOwnership"
+              class="p-8 text-center text-sm font-semibold text-stone-500">
+              CHỌN MỘT TỆP ĐỂ XEM THÔNG TIN CHỦ SỞ HỮU
+            </div>
+          </div>
+        </div>
       </div>
     </template>
   </div>
@@ -200,6 +326,8 @@
 import { ref, computed } from "vue";
 import { useRepositoryStore } from "@/stores/repository";
 import { useGraphStore } from "@/stores/graph";
+import type { FileOwnership } from "@/types";
+import { Zap, Flame, AlertTriangle, Link2, Users } from "lucide-vue-next";
 
 const repositoryStore = useRepositoryStore();
 const graphStore = useGraphStore();
@@ -211,6 +339,10 @@ const analysisProgress = ref({
   total: 0,
   message: "ĐANG KHỞI TẠO...",
 });
+
+const selectedFileForOwnership = ref("");
+const fileOwnership = ref<FileOwnership | null>(null);
+const loadingOwnership = ref(false);
 
 const progressPercent = computed(() => {
   if (analysisProgress.value.total === 0) return 0;
@@ -224,6 +356,7 @@ const hotspotFunctions = computed(() => graphStore.getHotspotFunctions(10));
 const coChangePatterns = computed(() =>
   graphStore.getCoChangePatterns().slice(0, 10)
 );
+const fileNodes = computed(() => graphStore.fileNodes);
 
 async function runAnalysis() {
   if (!repositoryStore.currentRepository) return;
@@ -259,6 +392,27 @@ async function runAnalysis() {
   }
 }
 
+async function loadFileOwnership() {
+  if (!selectedFileForOwnership.value || !repositoryStore.currentRepository) {
+    fileOwnership.value = null;
+    return;
+  }
+
+  loadingOwnership.value = true;
+  try {
+    fileOwnership.value = await graphStore.getFileOwnership(
+      repositoryStore.currentRepository,
+      selectedFileForOwnership.value
+    );
+    console.log("File ownership loaded:", fileOwnership.value);
+  } catch (e) {
+    console.error("Failed to load file ownership:", e);
+    fileOwnership.value = null;
+  } finally {
+    loadingOwnership.value = false;
+  }
+}
+
 function getFileName(path: string): string {
   return path.split("/").pop() || path;
 }
@@ -268,5 +422,13 @@ function getRiskBadgeClass(score: number): string {
   if (score >= 50) return "bg-neo-orange text-black"; // High risk
   if (score >= 25) return "bg-neo-yellow text-black"; // Medium risk
   return "bg-neo-green text-black"; // Low risk
+}
+
+function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 </script>

@@ -6,6 +6,7 @@ import type {
   FileChange,
   Branch,
   GitStatusEntry,
+  EvolutionData,
 } from "@/types";
 import { useGraphStore } from "./graph";
 
@@ -29,6 +30,7 @@ export const useRepositoryStore = defineStore("repository", () => {
   const isLoading = ref(false);
   const hasMoreCommits = ref(true);
   const error = ref<string | null>(null);
+  const evolutionData = ref<EvolutionData | null>(null);
   const analysisProgress = ref({
     stage: "",
     current: 0,
@@ -316,8 +318,22 @@ export const useRepositoryStore = defineStore("repository", () => {
     branches.value = [];
     selectedBranch.value = "";
     gitStatus.value = [];
+    evolutionData.value = null;
     hasMoreCommits.value = true;
     error.value = null;
+  }
+
+  async function loadEvolutionData(months: number = 12): Promise<void> {
+    if (!currentRepository.value) return;
+    try {
+      evolutionData.value = await window.electronAPI.getEvolutionData(
+        currentRepository.value,
+        months
+      );
+    } catch (e) {
+      console.error("Failed to load evolution data:", e);
+      evolutionData.value = null;
+    }
   }
 
   return {
@@ -332,6 +348,7 @@ export const useRepositoryStore = defineStore("repository", () => {
     isLoading,
     hasMoreCommits,
     error,
+    evolutionData,
     analysisProgress,
 
     // Getters
@@ -353,5 +370,6 @@ export const useRepositoryStore = defineStore("repository", () => {
     setAnalysisProgress,
     clearRepository,
     removeRecentRepository,
+    loadEvolutionData,
   };
 });

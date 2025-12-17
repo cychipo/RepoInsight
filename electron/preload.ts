@@ -58,6 +58,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   analyzeRepository: (repoPath: string) =>
     ipcRenderer.invoke("analysis:analyzeRepository", repoPath),
   getAnalysisProgress: () => ipcRenderer.invoke("analysis:getProgress"),
+  getFileOwnership: (repoPath: string, filePath: string) =>
+    ipcRenderer.invoke("git:getFileOwnership", repoPath, filePath),
+  getEvolutionData: (repoPath: string, months?: number) =>
+    ipcRenderer.invoke("git:getEvolutionData", repoPath, months),
 
   // Event listeners for progress updates
   onAnalysisProgress: (callback: (progress: any) => void) => {
