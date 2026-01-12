@@ -465,8 +465,7 @@ function registerGitHandlers() {
     "git:cloneRepository",
     async (_, url, destPath) => {
       return new Promise((resolve) => {
-        var _a;
-        const repoName = ((_a = url.split("/").pop()) == null ? void 0 : _a.replace(".git", "")) || "repo";
+        const repoName = url.split("/").pop()?.replace(".git", "") || "repo";
         const fullPath = path.join(destPath, repoName);
         const cloneProcess = child_process.spawn("git", [
           "clone",
@@ -1280,7 +1279,6 @@ function createWindow() {
   });
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }

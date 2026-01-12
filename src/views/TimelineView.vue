@@ -3,7 +3,8 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0 p-6">
       <div
-        class="fixed top-6 left-[268px] right-[400px] flex items-center justify-between z-10 bg-neo-cream py-2">
+        class="fixed top-6 left-[268px] right-[400px] flex items-center justify-between z-10 bg-neo-cream py-2"
+      >
         <h1 class="text-2xl">◷ DÒNG THỜI GIAN COMMIT</h1>
 
         <!-- Branch Selector -->
@@ -13,18 +14,21 @@
             v-model="selectedBranch"
             @change="onBranchChange"
             class="px-4 py-2 font-sans text-xs font-bold border-3 border-neo-black bg-neo-white cursor-pointer min-w-[150px] disabled:opacity-60 disabled:cursor-not-allowed outline-none focus:bg-neo-yellow focus:shadow-brutal"
-            :disabled="repositoryStore.isLoading">
+            :disabled="repositoryStore.isLoading"
+          >
             <option
               v-for="branch in repositoryStore.branches"
               :key="branch.name"
-              :value="branch.name">
+              :value="branch.name"
+            >
               {{ branch.name }}{{ branch.isCurrent ? " ✓" : "" }}
             </option>
           </select>
         </div>
 
         <div
-          class="flex items-center bg-neo-white border-3 border-neo-black shadow-brutal">
+          class="flex items-center bg-neo-white border-3 border-neo-black shadow-brutal"
+        >
           <span class="pl-4 pr-2">
             <Search :size="18" />
           </span>
@@ -32,14 +36,16 @@
             v-model="searchQuery"
             type="text"
             class="border-none shadow-none w-[220px] text-sm focus:bg-neo-yellow focus:shadow-none bg-transparent outline-none p-2"
-            placeholder="TÌM KIẾM COMMIT..." />
+            placeholder="TÌM KIẾM COMMIT..."
+          />
         </div>
       </div>
 
       <!-- Empty State -->
       <div
         v-if="!repositoryStore.hasRepository"
-        class="flex-1 flex flex-col items-center justify-center gap-6 text-center mt-[60px] card">
+        class="flex-1 flex flex-col items-center justify-center gap-6 text-center mt-[60px] card"
+      >
         <div class="text-6xl opacity-30">◷</div>
         <h3 class="text-2xl font-bold">CHƯA CHỌN KHO CHỨA</h3>
         <p class="font-medium text-stone-600">
@@ -51,7 +57,8 @@
       <!-- Timeline Content -->
       <div
         v-else
-        class="flex flex-col mt-[60px] flex-1 overflow-y-auto min-h-0">
+        class="flex flex-col mt-[60px] flex-1 overflow-y-auto min-h-0"
+      >
         <!-- Evolution Data Section -->
         <div v-if="evolutionData" class="mb-6 shrink-0">
           <div class="flex items-center justify-between mb-4">
@@ -64,7 +71,8 @@
               <select
                 v-model="evolutionMonths"
                 @change="loadEvolution"
-                class="px-3 py-1 text-xs font-bold border-3 border-neo-black bg-neo-white cursor-pointer outline-none focus:bg-neo-yellow">
+                class="px-3 py-1 text-xs font-bold border-3 border-neo-black bg-neo-white cursor-pointer outline-none focus:bg-neo-yellow"
+              >
                 <option :value="3">3 THÁNG</option>
                 <option :value="6">6 THÁNG</option>
                 <option :value="12">12 THÁNG</option>
@@ -77,7 +85,8 @@
             <!-- Author Activity -->
             <div class="card card-accent-blue">
               <h3
-                class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2">
+                class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2"
+              >
                 <Users :size="16" />
                 TÁC GIẢ HOẠT ĐỘNG
               </h3>
@@ -85,7 +94,8 @@
                 <div
                   v-for="author in topAuthors"
                   :key="author.authorEmail"
-                  class="flex items-center justify-between p-2 bg-neo-white border-2 border-neo-black text-xs">
+                  class="flex items-center justify-between p-2 bg-neo-white border-2 border-neo-black text-xs"
+                >
                   <div class="flex-1 min-w-0">
                     <div class="font-bold truncate">{{ author.author }}</div>
                     <div class="text-stone-500">
@@ -107,7 +117,8 @@
             <!-- File Types -->
             <div class="card card-accent-orange">
               <h3
-                class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2">
+                class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2"
+              >
                 <FolderOpen :size="16" />
                 LOẠI TỆP
               </h3>
@@ -115,7 +126,8 @@
                 <div
                   v-for="fileType in topFileTypes"
                   :key="fileType.extension"
-                  class="flex items-center justify-between p-2 bg-neo-white border-2 border-neo-black text-xs">
+                  class="flex items-center justify-between p-2 bg-neo-white border-2 border-neo-black text-xs"
+                >
                   <div class="flex items-center gap-2">
                     <code class="font-bold">{{ fileType.extension }}</code>
                     <span class="badge badge-sm">{{ fileType.count }}</span>
@@ -135,23 +147,27 @@
             <!-- Code Churn Summary -->
             <div class="card card-accent-pink">
               <h3
-                class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2">
+                class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2"
+              >
                 <BarChart3 :size="16" />
                 THỐNG KÊ THAY ĐỔI
               </h3>
               <div class="flex flex-col gap-3">
                 <div
-                  class="flex items-center justify-between p-2 bg-neo-green border-2 border-neo-black">
+                  class="flex items-center justify-between p-2 bg-neo-green border-2 border-neo-black"
+                >
                   <span class="text-xs font-bold">TỔNG THÊM</span>
                   <span class="text-lg font-bold">+{{ totalAdditions }}</span>
                 </div>
                 <div
-                  class="flex items-center justify-between p-2 bg-neo-red border-2 border-neo-black text-white">
+                  class="flex items-center justify-between p-2 bg-neo-red border-2 border-neo-black text-white"
+                >
                   <span class="text-xs font-bold">TỔNG XÓA</span>
                   <span class="text-lg font-bold">-{{ totalDeletions }}</span>
                 </div>
                 <div
-                  class="flex items-center justify-between p-2 bg-neo-yellow border-2 border-neo-black">
+                  class="flex items-center justify-between p-2 bg-neo-yellow border-2 border-neo-black"
+                >
                   <span class="text-xs font-bold">THAY ĐỔI RÒNG</span>
                   <span class="text-lg font-bold"
                     >{{ netChange >= 0 ? "+" : "" }}{{ netChange }}</span
@@ -164,7 +180,8 @@
           <!-- Timeline Chart -->
           <div class="card card-accent-purple mb-6">
             <h3
-              class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2">
+              class="text-sm font-bold mb-3 pb-2 border-b-3 border-neo-black flex items-center gap-2"
+            >
               <Calendar :size="16" />
               BIỂU ĐỒ HOẠT ĐỘNG THEO THỜI GIAN
             </h3>
@@ -172,39 +189,46 @@
             <div class="flex items-center gap-4 mb-3 text-xs font-bold">
               <div class="flex items-center gap-2">
                 <div
-                  class="w-6 h-1 bg-neo-blue border-2 border-neo-black"></div>
+                  class="w-6 h-1 bg-neo-blue border-2 border-neo-black"
+                ></div>
                 <span>COMMITS</span>
               </div>
               <div class="flex items-center gap-2">
                 <div
-                  class="w-6 h-1 bg-neo-green border-2 border-neo-black"></div>
+                  class="w-6 h-1 bg-neo-green border-2 border-neo-black"
+                ></div>
                 <span>DÒNG THÊM</span>
               </div>
               <div class="flex items-center gap-2">
                 <div
-                  class="w-6 h-1 bg-neo-pink border-2 border-neo-black"></div>
+                  class="w-6 h-1 bg-neo-pink border-2 border-neo-black"
+                ></div>
                 <span>DÒNG XÓA</span>
               </div>
             </div>
             <div
               v-if="timelineChart.length === 0"
-              class="h-[300px] flex items-center justify-center text-sm font-bold text-stone-500 bg-neo-cream/50 border-2 border-neo-black">
+              class="h-[300px] flex items-center justify-center text-sm font-bold text-stone-500 bg-neo-cream/50 border-2 border-neo-black"
+            >
               KHÔNG CÓ DỮ LIỆU BIỂU ĐỒ
             </div>
             <div
               v-else
-              class="bg-neo-cream/50 border-2 border-neo-black overflow-x-auto">
+              class="bg-neo-cream/50 border-2 border-neo-black overflow-x-auto"
+            >
               <!-- Chart Container with fixed pixel widths -->
               <div
                 :style="{
                   width: `${timelineChart.length * 80}px`,
                   minWidth: '100%',
-                }">
+                }"
+              >
                 <!-- SVG Chart -->
                 <svg
                   :width="timelineChart.length * 80"
                   height="220"
-                  :viewBox="`0 0 ${timelineChart.length * 80} 220`">
+                  :viewBox="`0 0 ${timelineChart.length * 80} 220`"
+                >
                   <!-- Grid Lines -->
                   <line
                     v-for="i in 4"
@@ -215,7 +239,8 @@
                     :y2="i * 50 + 10"
                     stroke="#d4d4d4"
                     stroke-width="1"
-                    stroke-dasharray="4,4" />
+                    stroke-dasharray="4,4"
+                  />
 
                   <!-- Commits Line -->
                   <polyline
@@ -231,7 +256,8 @@
                     "
                     fill="none"
                     stroke="#3b82f6"
-                    stroke-width="3" />
+                    stroke-width="3"
+                  />
 
                   <!-- Lines Added Line -->
                   <polyline
@@ -247,7 +273,8 @@
                     "
                     fill="none"
                     stroke="#22c55e"
-                    stroke-width="3" />
+                    stroke-width="3"
+                  />
 
                   <!-- Lines Deleted Line -->
                   <polyline
@@ -263,12 +290,14 @@
                     "
                     fill="none"
                     stroke="#ec4899"
-                    stroke-width="3" />
+                    stroke-width="3"
+                  />
 
                   <!-- Data Points -->
                   <g
                     v-for="(point, index) in timelineChart"
-                    :key="`point-${index}`">
+                    :key="`point-${index}`"
+                  >
                     <!-- Commits Point -->
                     <circle
                       :cx="index * 80 + 40"
@@ -276,7 +305,8 @@
                       r="5"
                       fill="#3b82f6"
                       stroke="#000"
-                      stroke-width="2" />
+                      stroke-width="2"
+                    />
                     <!-- Lines Added Point -->
                     <circle
                       :cx="index * 80 + 40"
@@ -284,7 +314,8 @@
                       r="5"
                       fill="#22c55e"
                       stroke="#000"
-                      stroke-width="2" />
+                      stroke-width="2"
+                    />
                     <!-- Lines Deleted Point -->
                     <circle
                       :cx="index * 80 + 40"
@@ -292,7 +323,8 @@
                       r="5"
                       fill="#ec4899"
                       stroke="#000"
-                      stroke-width="2" />
+                      stroke-width="2"
+                    />
                   </g>
                 </svg>
 
@@ -302,14 +334,18 @@
                     v-for="(point, index) in timelineChart"
                     :key="`label-${index}`"
                     class="group relative shrink-0 text-center"
-                    style="width: 80px">
-                    <div class="text-[0.7rem] font-bold text-stone-600 py-2">
+                    style="width: 80px"
+                  >
+                    <div
+                      class="text-[0.7rem] font-bold text-stone-600 py-2 whitespace-pre-line"
+                    >
                       {{ formatChartDate(point.date) }}
                     </div>
 
                     <!-- Tooltip on Hover -->
                     <div
-                      class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-neo-black text-neo-white px-3 py-2 text-[0.7rem] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border-2 border-neo-white shadow-brutal">
+                      class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-neo-black text-neo-white px-3 py-2 text-[0.7rem] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 border-2 border-neo-white shadow-brutal"
+                    >
                       <div class="text-center mb-1 text-neo-yellow">
                         {{ formatChartDate(point.date) }}
                       </div>
@@ -330,7 +366,8 @@
                         >
                       </div>
                       <div
-                        class="text-stone-400 text-center mt-1 text-[0.6rem]">
+                        class="text-stone-400 text-center mt-1 text-[0.6rem]"
+                      >
                         {{ point.contributors }} người đóng góp
                       </div>
                     </div>
@@ -346,7 +383,8 @@
           <button
             @click="loadEvolution"
             class="btn btn-primary w-full flex items-center justify-center gap-2"
-            :disabled="repositoryStore.isLoading">
+            :disabled="repositoryStore.isLoading"
+          >
             <TrendingUp :size="16" />
             TẢI DỮ LIỆU TIẾN HÓA
           </button>
@@ -354,14 +392,16 @@
 
         <div
           v-if="loadingEvolution"
-          class="flex items-center justify-center gap-3 p-8 mb-6">
+          class="flex items-center justify-center gap-3 p-8 mb-6"
+        >
           <span class="loader" style="width: 24px; height: 24px"></span>
           <span class="text-sm font-bold">ĐANG TẢI DỮ LIỆU TIẾN HÓA...</span>
         </div>
 
         <!-- Stats Bar -->
         <div
-          class="flex items-center gap-6 px-6 py-4 bg-neo-yellow border-3 border-neo-black shadow-brutal mb-6 shrink-0">
+          class="flex items-center gap-6 px-6 py-4 bg-neo-yellow border-3 border-neo-black shadow-brutal mb-6 shrink-0"
+        >
           <div class="flex items-baseline gap-2">
             <span class="text-2xl font-bold">{{ filteredCommits.length }}</span>
             <span class="text-xs font-bold uppercase">COMMITS</span>
@@ -384,7 +424,8 @@
             <div
               v-for="(group, date) in groupedCommits"
               :key="date"
-              class="mb-8">
+              class="mb-8"
+            >
               <div class="flex items-center gap-4 mb-4">
                 <span class="font-bold text-sm">{{
                   formatGroupDate(date)
@@ -403,9 +444,11 @@
                   :class="{
                     '!bg-neo-pink shadow-brutal':
                       selectedCommit?.hash === commit.hash,
-                  }">
+                  }"
+                >
                   <div
-                    class="w-4 h-4 mt-1 bg-neo-blue border-3 border-neo-black flex-shrink-0"></div>
+                    class="w-4 h-4 mt-1 bg-neo-blue border-3 border-neo-black flex-shrink-0"
+                  ></div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between mb-1">
                       <code
@@ -421,7 +464,8 @@
                     </p>
                     <div class="flex items-center justify-between gap-4">
                       <span
-                        class="flex items-center gap-1 text-xs font-semibold">
+                        class="flex items-center gap-1 text-xs font-semibold"
+                      >
                         <span class="text-neo-green">●</span>
                         {{ commit.author }}
                       </span>
@@ -444,7 +488,8 @@
 
             <div
               v-if="filteredCommits.length === 0"
-              class="p-8 text-center font-bold">
+              class="p-8 text-center font-bold"
+            >
               <p>KHÔNG TÌM THẤY COMMIT NÀO PHÙ HỢP "{{ searchQuery }}"</p>
             </div>
           </div>
@@ -452,11 +497,13 @@
           <!-- Load More Button -->
           <div
             v-if="repositoryStore.hasMoreCommits && !searchQuery"
-            class="flex justify-center p-8">
+            class="flex justify-center p-8"
+          >
             <button
               class="btn btn-secondary btn-lg"
               @click="handleLoadMore"
-              :disabled="repositoryStore.isLoading">
+              :disabled="repositoryStore.isLoading"
+            >
               <span v-if="repositoryStore.isLoading">ĐANG TẢI...</span>
               <span v-else>↓ TẢI THÊM COMMIT</span>
             </button>
@@ -464,7 +511,8 @@
 
           <div
             v-if="!repositoryStore.hasMoreCommits"
-            class="text-center p-6 text-stone-500 text-xs font-bold">
+            class="text-center p-6 text-stone-500 text-xs font-bold"
+          >
             <span>— HẾT COMMIT —</span>
           </div>
         </div>
@@ -473,9 +521,11 @@
       <!-- Commit Details Sidebar -->
       <aside
         v-if="selectedCommit"
-        class="w-[360px] flex flex-col mt-[60px] overflow-hidden card">
+        class="w-[360px] flex flex-col mt-[60px] overflow-hidden card"
+      >
         <div
-          class="flex items-center justify-between pb-4 border-b-3 border-neo-black mb-4">
+          class="flex items-center justify-between pb-4 border-b-3 border-neo-black mb-4"
+        >
           <h3 class="m-0 text-xl">CHI TIẾT COMMIT</h3>
           <button class="btn btn-icon btn-ghost" @click="selectedCommit = null">
             ✕
@@ -541,11 +591,13 @@
               >TỆP ĐÃ THAY ĐỔI</label
             >
             <div
-              class="flex flex-col gap-1 overflow-y-auto max-h-[200px] border-2 border-neo-black p-1 bg-neo-cream/50">
+              class="flex flex-col gap-1 overflow-y-auto max-h-[200px] border-2 border-neo-black p-1 bg-neo-cream/50"
+            >
               <div
                 v-for="file in commitFiles"
                 :key="file.path"
-                class="flex items-center gap-2 p-1 bg-neo-white border-2 border-neo-black">
+                class="flex items-center gap-2 p-1 bg-neo-white border-2 border-neo-black"
+              >
                 <span
                   class="w-[22px] h-[22px] flex items-center justify-center text-xs font-bold border-2 border-neo-black"
                   :class="{
@@ -553,7 +605,8 @@
                     'bg-neo-orange': file.status === 'modified',
                     'bg-neo-red text-white': file.status === 'deleted',
                     'bg-neo-purple': file.status === 'renamed',
-                  }">
+                  }"
+                >
                   {{ getStatusIcon(file.status) }}
                 </span>
                 <span class="flex-1 min-w-0 font-mono text-xs truncate">{{
@@ -630,18 +683,18 @@ const netChange = computed(() => totalAdditions.value - totalDeletions.value);
 
 const timelineChart = computed(() => {
   if (!evolutionData.value) return [];
-  // Group by week for better visualization
-  const weeklyData = new Map();
+
+  // Group by day and filter only days with commits
+  const dailyData = new Map();
 
   evolutionData.value.timeline.forEach((point) => {
     const date = new Date(point.date);
-    const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - date.getDay());
-    const weekKey = weekStart.toISOString().split("T")[0];
+    date.setHours(0, 0, 0, 0);
+    const dayKey = date.toISOString().split("T")[0];
 
-    if (!weeklyData.has(weekKey)) {
-      weeklyData.set(weekKey, {
-        date: weekStart,
+    if (!dailyData.has(dayKey)) {
+      dailyData.set(dayKey, {
+        date: date,
         commits: 0,
         files: 0,
         linesAdded: 0,
@@ -650,20 +703,25 @@ const timelineChart = computed(() => {
       });
     }
 
-    const week = weeklyData.get(weekKey);
-    week.commits += point.commits;
-    week.files += point.files;
-    week.linesAdded += point.linesAdded;
-    week.linesDeleted += point.linesDeleted;
-    week.contributors.add(point.contributors);
+    const day = dailyData.get(dayKey);
+    day.commits += point.commits;
+    day.files += point.files;
+    day.linesAdded += point.linesAdded;
+    day.linesDeleted += point.linesDeleted;
+    day.contributors.add(point.contributors);
   });
 
-  return Array.from(weeklyData.values())
-    .map((week) => ({
-      ...week,
-      contributors: week.contributors.size,
+  // Convert to array and sort by date descending
+  const sortedDays = Array.from(dailyData.values())
+    .map((day) => ({
+      ...day,
+      contributors: day.contributors.size,
     }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .filter((day) => day.commits > 0) // Only days with commits
+    .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest first
+
+  // Take the last 7 days with commits and reverse to show oldest to newest
+  return sortedDays.slice(0, 7).reverse();
 });
 
 const maxCommitsInDay = computed(() => {
@@ -825,6 +883,25 @@ function getStatusIcon(status: string): string {
 
 function formatChartDate(date: Date | string): string {
   const d = new Date(date);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dateOnly = new Date(d);
+  dateOnly.setHours(0, 0, 0, 0);
+
+  // Check if it's today
+  if (dateOnly.getTime() === today.getTime()) {
+    return "HÔM NAY";
+  }
+
+  // Check if it's yesterday
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (dateOnly.getTime() === yesterday.getTime()) {
+    return "HÔM QUA";
+  }
+
+  // Show day of week for the last 7 days
+  const daysOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  return `${daysOfWeek[d.getDay()]}\n${d.getDate()}/${d.getMonth() + 1}`;
 }
 </script>

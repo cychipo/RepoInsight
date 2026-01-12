@@ -22,7 +22,7 @@
 
 - [Node.js](https://nodejs.org/) >= 18.x
 - [Git](https://git-scm.com/)
-- npm hoặc yarn
+- [pnpm](https://pnpm.io/) >= 8.x
 
 ### Clone và cài đặt dependencies
 
@@ -32,13 +32,13 @@ git clone https://github.com/your-username/RepoInsight.git
 cd RepoInsight
 
 # Cài đặt dependencies
-npm install
+pnpm install
 ```
 
 ## 💻 Chạy Development
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Ứng dụng sẽ khởi chạy ở chế độ development với hot-reload.
@@ -48,23 +48,23 @@ npm run dev
 ### Build cho hệ điều hành hiện tại
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### Build cho từng hệ điều hành
 
 ```bash
 # Windows (.exe)
-npm run build:windows
+pnpm run build:windows
 
 # Linux (.AppImage, .deb)
-npm run build:linux
+pnpm run build:linux
 
 # macOS (.dmg)
-npm run build:macos
+pnpm run build:macos
 
 # Tất cả các hệ điều hành
-npm run build:all
+pnpm run build:all
 ```
 
 > **⚠️ Lưu ý Cross-Platform Build:**
@@ -103,13 +103,13 @@ RepoInsight/
 
 | Lệnh | Mô tả |
 |------|-------|
-| `npm run dev` | Chạy development server |
-| `npm run build` | Build cho platform hiện tại |
-| `npm run build:windows` | Build cho Windows |
-| `npm run build:linux` | Build cho Linux |
-| `npm run build:macos` | Build cho macOS |
-| `npm run build:all` | Build cho tất cả platforms |
-| `npm run type-check` | Kiểm tra TypeScript types |
+| `pnpm run dev` | Chạy development server |
+| `pnpm run build` | Build cho platform hiện tại |
+| `pnpm run build:windows` | Build cho Windows |
+| `pnpm run build:linux` | Build cho Linux |
+| `pnpm run build:macos` | Build cho macOS |
+| `pnpm run build:all` | Build cho tất cả platforms |
+| `pnpm run type-check` | Kiểm tra TypeScript types |
 
 ## 🧰 Tech Stack
 

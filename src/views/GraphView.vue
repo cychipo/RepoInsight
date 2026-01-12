@@ -390,7 +390,9 @@ function formatDate(date: Date | string): string {
 async function initGraph() {
   if (!graphContainer.value || !graphStore.hasData) return;
 
-  const cytoscape = (await import("cytoscape")).default;
+  // Cytoscape uses CommonJS export, so we need to handle it specially
+  const cytoscapeModule = await import("cytoscape");
+  const cytoscape = (cytoscapeModule as any).default || cytoscapeModule;
 
   const nodes = graphStore.graph.nodes.map((node) => ({
     data: {
