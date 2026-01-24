@@ -50,6 +50,18 @@ interface GraphEdge {
   metadata?: Record<string, any>;
 }
 
+// Git Graph types for branch visualization
+interface GitGraphCommit {
+  hash: string;
+  shortHash: string;
+  author: string;
+  authorEmail: string;
+  date: Date;
+  message: string;
+  parentHashes: string[];
+  refs: string[]; // branch names, tags, etc.
+}
+
 const execAsync = promisify(exec);
 
 // Utility to run git commands
@@ -124,7 +136,7 @@ export function registerGitHandlers() {
     "git:getCommits",
     async (_, repoPath: string, limit = 500): Promise<Commit[]> => {
       try {
-        // Format: hash|short_hash|author|email|date|message|files|insertions|deletions
+        // Format: hash|short_hash|author|email|date|message
         const format = "%H|%h|%an|%ae|%aI|%s";
         const output = await runGitCommand(
           repoPath,
@@ -142,13 +154,11 @@ export function registerGitHandlers() {
             continue;
           }
 
-          // Skip if this is a stats line
-          if (
-            line.includes("insertion") ||
-            line.includes("deletion") ||
-            line.includes("file changed") ||
-            line.includes("files changed")
-          ) {
+          // Check if this is a stats line (contains "file" or "files" changed)
+          const isStatsLine =
+            line.includes("file changed") || line.includes("files changed");
+
+          if (isStatsLine) {
             i++;
             continue;
           }
@@ -167,20 +177,36 @@ export function registerGitHandlers() {
               deletions: 0,
             };
 
-            // Look for stats in next line
-            if (i + 1 < lines.length) {
-              const statsLine = lines[i + 1].trim();
-              if (statsLine) {
-                const filesMatch = statsLine.match(/(\d+) files? changed/);
-                const insertMatch = statsLine.match(/(\d+) insertions?\(\+\)/);
-                const deleteMatch = statsLine.match(/(\d+) deletions?\(-\)/);
+            // Look for stats in following lines (may have empty line between)
+            for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+              const statsLine = lines[j].trim();
+              if (!statsLine) continue;
 
-                if (filesMatch)
+              // Check if this line contains stats
+              if (
+                statsLine.includes("file changed") ||
+                statsLine.includes("files changed")
+              ) {
+                // Fixed regex patterns to match git output format
+                // Git outputs: "X files changed, Y insertions(+), Z deletions(-)"
+                // or: "X files changed, Y insertions(+)"
+                // or: "X files changed, Z deletions(-)"
+                const filesMatch = statsLine.match(/(\d+) files? changed/);
+                const insertMatch = statsLine.match(
+                  /(\d+) insertions?\s*\(\+\)/
+                );
+                const deleteMatch = statsLine.match(/(\d+) deletions?\s*\(-\)/);
+
+                if (filesMatch) {
                   commit.filesChanged = parseInt(filesMatch[1], 10);
-                if (insertMatch)
+                }
+                if (insertMatch) {
                   commit.insertions = parseInt(insertMatch[1], 10);
-                if (deleteMatch)
+                }
+                if (deleteMatch) {
                   commit.deletions = parseInt(deleteMatch[1], 10);
+                }
+                break;
               }
             }
 
@@ -484,6 +510,96 @@ export function registerGitHandlers() {
           },
           error: error instanceof Error ? error.message : "Unknown error",
         };
+      }
+    }
+  );
+
+  // Get Git Graph data with parent hashes and branch refs for visualization
+  ipcMain.handle(
+    "git:getGitGraph",
+    async (_, repoPath: string, limit = 500): Promise<GitGraphCommit[]> => {
+      try {
+        // Get all branches for ref lookup
+        const branchOutput = await runGitCommand(
+          repoPath,
+          "branch -a --format='%(refname:short)'"
+        );
+        const branches = branchOutput.split("\n").filter((b) => b.trim());
+
+        // Get branch head commits
+        const branchHeads = new Map<string, string[]>();
+        for (const branch of branches) {
+          try {
+            const hash = await runGitCommand(
+              repoPath,
+              `rev-parse "${branch.replace(/'/g, "")}"`
+            );
+            const cleanHash = hash.trim();
+            const cleanBranch = branch.replace(/'/g, "");
+            if (!branchHeads.has(cleanHash)) {
+              branchHeads.set(cleanHash, []);
+            }
+            branchHeads.get(cleanHash)!.push(cleanBranch);
+          } catch {
+            // Skip invalid branch refs
+          }
+        }
+
+        // Get commit data with parent hashes and decorations
+        // Format: hash|short_hash|parent_hashes|author|email|date|decorations|message
+        const format = "%H|%h|%P|%an|%ae|%aI|%D|%s";
+        const output = await runGitCommand(
+          repoPath,
+          `log --all --format="${format}" -n ${limit}`
+        );
+
+        const commits: GitGraphCommit[] = [];
+        const lines = output.split("\n").filter((l) => l.trim());
+
+        for (const line of lines) {
+          const parts = line.split("|");
+          if (parts.length >= 8) {
+            const hash = parts[0];
+            const parentHashes = parts[2]
+              ? parts[2].split(" ").filter((p) => p)
+              : [];
+
+            // Parse refs from decorations (e.g., "HEAD -> main, origin/main, tag: v1.0")
+            let refs: string[] = [];
+            const decorations = parts[6];
+            if (decorations) {
+              refs = decorations
+                .split(",")
+                .map((d) => d.trim())
+                .map((d) => d.replace(/^HEAD -> /, ""))
+                .filter((d) => d && d !== "HEAD");
+            }
+
+            // Also add branches that point to this commit
+            const branchRefs = branchHeads.get(hash) || [];
+            for (const br of branchRefs) {
+              if (!refs.includes(br)) {
+                refs.push(br);
+              }
+            }
+
+            commits.push({
+              hash,
+              shortHash: parts[1],
+              author: parts[3],
+              authorEmail: parts[4],
+              date: new Date(parts[5]),
+              message: parts[7],
+              parentHashes,
+              refs,
+            });
+          }
+        }
+
+        return commits;
+      } catch (error) {
+        console.error("Failed to get git graph:", error);
+        throw error;
       }
     }
   );

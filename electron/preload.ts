@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("git:getFileChanges", repoPath, commitHash),
   getRepositoryInfo: (repoPath: string) =>
     ipcRenderer.invoke("git:getRepositoryInfo", repoPath),
+  getGitGraph: (repoPath: string, limit?: number) =>
+    ipcRenderer.invoke("git:getGitGraph", repoPath, limit),
 
   // Analysis operations
   analyzeRepository: (repoPath: string) =>

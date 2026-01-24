@@ -1,8 +1,26 @@
 <template>
   <div class="graph-view">
     <div class="view-header">
-      <h1>◈ KNOWLEDGE GRAPH</h1>
-      <div class="view-actions">
+      <div class="view-title-group">
+        <h1>
+          {{ viewMode === "knowledge" ? "◈ KNOWLEDGE GRAPH" : "◈ GIT GRAPH" }}
+        </h1>
+        <div class="view-toggle">
+          <button
+            class="toggle-btn"
+            :class="{ active: viewMode === 'knowledge' }"
+            @click="viewMode = 'knowledge'">
+            KNOWLEDGE
+          </button>
+          <button
+            class="toggle-btn"
+            :class="{ active: viewMode === 'git' }"
+            @click="viewMode = 'git'">
+            GIT GRAPH
+          </button>
+        </div>
+      </div>
+      <div class="view-actions" v-if="viewMode === 'knowledge'">
         <div class="filter-group">
           <button
             v-for="nodeType in nodeTypes"
@@ -20,150 +38,170 @@
       </div>
     </div>
 
-    <div class="graph-container">
-      <!-- Graph Canvas -->
-      <div ref="graphContainer" class="graph-canvas">
-        <div v-if="!graphStore.hasData" class="empty-state">
-          <div class="empty-icon">◈</div>
-          <h3>NO GRAPH DATA</h3>
-          <p>
-            Select a repository from the home page to generate the knowledge
-            graph.
-          </p>
-          <router-link to="/" class="btn btn-primary">
-            ◆ OPEN REPOSITORY
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Node Details Panel -->
-      <aside v-if="selectedNode" class="details-panel card">
-        <div class="panel-header">
-          <div
-            class="node-type-badge"
-            :style="{ background: getNodeColor(selectedNode.type) }">
-            {{ selectedNode.type.toUpperCase() }}
-          </div>
-          <button class="btn btn-icon btn-ghost" @click="selectedNode = null">
-            ✕
-          </button>
-        </div>
-
-        <div class="panel-content">
-          <h3 class="node-label">{{ selectedNode.label }}</h3>
-
-          <div class="metadata-section">
-            <template v-if="selectedNode.type === 'commit'">
-              <div class="meta-item">
-                <span class="meta-label">HASH</span>
-                <code class="meta-value">{{ selectedNode.metadata.hash }}</code>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">AUTHOR</span>
-                <span class="meta-value">{{
-                  selectedNode.metadata.author
-                }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">DATE</span>
-                <span class="meta-value">{{
-                  formatDate(selectedNode.metadata.date)
-                }}</span>
-              </div>
-              <div class="meta-item full">
-                <span class="meta-label">MESSAGE</span>
-                <p class="meta-value">{{ selectedNode.metadata.message }}</p>
-              </div>
-            </template>
-
-            <template v-else-if="selectedNode.type === 'file'">
-              <div class="meta-item">
-                <span class="meta-label">PATH</span>
-                <code class="meta-value">{{ selectedNode.metadata.path }}</code>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">LANGUAGE</span>
-                <span class="meta-value">{{
-                  selectedNode.metadata.language
-                }}</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">MODIFICATIONS</span>
-                <span class="meta-value highlight">{{
-                  selectedNode.metadata.modifyCount
-                }}</span>
-              </div>
-            </template>
-
-            <template v-else-if="selectedNode.type === 'function'">
-              <div class="meta-item">
-                <span class="meta-label">NAME</span>
-                <code class="meta-value">{{ selectedNode.metadata.name }}</code>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">FILE</span>
-                <code class="meta-value truncate">{{
-                  selectedNode.metadata.filePath
-                }}</code>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">LINES</span>
-                <span class="meta-value"
-                  >{{ selectedNode.metadata.startLine }} -
-                  {{ selectedNode.metadata.endLine }}</span
-                >
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">MODIFICATIONS</span>
-                <span class="meta-value highlight">{{
-                  selectedNode.metadata.modifyCount
-                }}</span>
-              </div>
-            </template>
+    <!-- Knowledge Graph View -->
+    <template v-if="viewMode === 'knowledge'">
+      <div class="graph-container">
+        <!-- Graph Canvas -->
+        <div ref="graphContainer" class="graph-canvas">
+          <div v-if="!graphStore.hasData" class="empty-state">
+            <div class="empty-icon">◈</div>
+            <h3>NO GRAPH DATA</h3>
+            <p>
+              Select a repository from the home page to generate the knowledge
+              graph.
+            </p>
+            <router-link to="/" class="btn btn-primary">
+              ◆ OPEN REPOSITORY
+            </router-link>
           </div>
         </div>
-      </aside>
-    </div>
 
-    <!-- Graph Legend -->
-    <div class="graph-legend">
-      <div class="legend-title">LEGEND</div>
-      <div class="legend-items">
-        <div class="legend-item">
-          <span class="legend-dot" style="background: var(--neo-blue)"></span>
-          <span>COMMIT</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot" style="background: var(--neo-green)"></span>
-          <span>FILE</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot" style="background: var(--neo-orange)"></span>
-          <span>FUNCTION</span>
-        </div>
-        <div class="legend-divider"></div>
-        <div class="legend-item">
-          <span class="legend-line"></span>
-          <span>MODIFIES</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-line dashed"></span>
-          <span>CONTAINS</span>
+        <!-- Node Details Panel -->
+        <aside v-if="selectedNode" class="details-panel card">
+          <div class="panel-header">
+            <div
+              class="node-type-badge"
+              :style="{ background: getNodeColor(selectedNode.type) }">
+              {{ selectedNode.type.toUpperCase() }}
+            </div>
+            <button class="btn btn-icon btn-ghost" @click="selectedNode = null">
+              ✕
+            </button>
+          </div>
+
+          <div class="panel-content">
+            <h3 class="node-label">{{ selectedNode.label }}</h3>
+
+            <div class="metadata-section">
+              <template v-if="selectedNode.type === 'commit'">
+                <div class="meta-item">
+                  <span class="meta-label">HASH</span>
+                  <code class="meta-value">{{
+                    selectedNode.metadata.hash
+                  }}</code>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">AUTHOR</span>
+                  <span class="meta-value">{{
+                    selectedNode.metadata.author
+                  }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">DATE</span>
+                  <span class="meta-value">{{
+                    formatDate(selectedNode.metadata.date)
+                  }}</span>
+                </div>
+                <div class="meta-item full">
+                  <span class="meta-label">MESSAGE</span>
+                  <p class="meta-value">{{ selectedNode.metadata.message }}</p>
+                </div>
+              </template>
+
+              <template v-else-if="selectedNode.type === 'file'">
+                <div class="meta-item">
+                  <span class="meta-label">PATH</span>
+                  <code class="meta-value">{{
+                    selectedNode.metadata.path
+                  }}</code>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">LANGUAGE</span>
+                  <span class="meta-value">{{
+                    selectedNode.metadata.language
+                  }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">MODIFICATIONS</span>
+                  <span class="meta-value highlight">{{
+                    selectedNode.metadata.modifyCount
+                  }}</span>
+                </div>
+              </template>
+
+              <template v-else-if="selectedNode.type === 'function'">
+                <div class="meta-item">
+                  <span class="meta-label">NAME</span>
+                  <code class="meta-value">{{
+                    selectedNode.metadata.name
+                  }}</code>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">FILE</span>
+                  <code class="meta-value truncate">{{
+                    selectedNode.metadata.filePath
+                  }}</code>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">LINES</span>
+                  <span class="meta-value"
+                    >{{ selectedNode.metadata.startLine }} -
+                    {{ selectedNode.metadata.endLine }}</span
+                  >
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">MODIFICATIONS</span>
+                  <span class="meta-value highlight">{{
+                    selectedNode.metadata.modifyCount
+                  }}</span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Graph Legend -->
+      <div class="graph-legend">
+        <div class="legend-title">LEGEND</div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <span class="legend-dot" style="background: var(--neo-blue)"></span>
+            <span>COMMIT</span>
+          </div>
+          <div class="legend-item">
+            <span
+              class="legend-dot"
+              style="background: var(--neo-green)"></span>
+            <span>FILE</span>
+          </div>
+          <div class="legend-item">
+            <span
+              class="legend-dot"
+              style="background: var(--neo-orange)"></span>
+            <span>FUNCTION</span>
+          </div>
+          <div class="legend-divider"></div>
+          <div class="legend-item">
+            <span class="legend-line"></span>
+            <span>MODIFIES</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-line dashed"></span>
+            <span>CONTAINS</span>
+          </div>
         </div>
       </div>
-    </div>
+    </template>
+
+    <!-- Git Graph View -->
+    <template v-else>
+      <GitGraph />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useGraphStore } from "@/stores/graph";
+import GitGraph from "@/components/GitGraph.vue";
 import type { GraphNode } from "@/types";
 
 const graphStore = useGraphStore();
 const graphContainer = ref<HTMLElement | null>(null);
 const selectedNode = ref<GraphNode | null>(null);
 const activeFilters = ref(["commit", "file", "function"]);
+const viewMode = ref<"knowledge" | "git">("git"); // Default to git graph
 
 const nodeTypes = [
   { id: "commit", label: "COMMITS", color: "var(--neo-blue)" },
@@ -356,14 +394,21 @@ async function initGraph() {
 watch(
   () => graphStore.hasData,
   (hasData) => {
-    if (hasData) {
+    if (hasData && viewMode.value === "knowledge") {
       initGraph();
     }
   }
 );
 
+watch(viewMode, (mode) => {
+  if (mode === "knowledge" && graphStore.hasData) {
+    // Re-init graph when switching back to knowledge view
+    setTimeout(() => initGraph(), 100);
+  }
+});
+
 onMounted(() => {
-  if (graphStore.hasData) {
+  if (graphStore.hasData && viewMode.value === "knowledge") {
     initGraph();
   }
 });
@@ -391,6 +436,42 @@ onUnmounted(() => {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--spacing-md);
+}
+
+.view-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0;
+}
+
+.toggle-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--neo-white);
+  border: 3px solid var(--neo-black);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-left: -3px;
+}
+
+.toggle-btn:first-child {
+  margin-left: 0;
+}
+
+.toggle-btn:hover {
+  background: var(--neo-yellow);
+}
+
+.toggle-btn.active {
+  background: var(--neo-blue);
+  box-shadow: inset 0 0 0 2px var(--neo-black);
 }
 
 .view-header h1 {
