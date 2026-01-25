@@ -6,24 +6,29 @@ import { registerGitHandlers } from "./ipc/git-handlers";
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
+  // In dev mode, __dirname is dist-electron/, in production it's resources/app/dist-electron/
+  const iconPath = process.env.VITE_DEV_SERVER_URL
+    ? join(__dirname, "../../public/icon.png")
+    : join(__dirname, "../dist/icon.png");
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1000,
     minHeight: 700,
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
     },
-    titleBarStyle: "hiddenInset",
     backgroundColor: "#0f172a",
   });
 
   // Load the app
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    // mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(join(__dirname, "../dist/index.html"));
   }
