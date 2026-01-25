@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow, IpcMainInvokeEvent } from "electron";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { join, basename, extname } from "path";
 import { readFile } from "fs/promises";
@@ -601,6 +601,90 @@ export function registerGitHandlers() {
         console.error("Failed to get git graph:", error);
         throw error;
       }
+    }
+  );
+
+  // Clone a remote repository with progress
+  ipcMain.handle(
+    "git:cloneRepository",
+    async (
+      _,
+      url: string,
+      destPath: string
+    ): Promise<{ success: boolean; path: string; error?: string }> => {
+      return new Promise((resolve) => {
+        const repoName = url.split("/").pop()?.replace(".git", "") || "repo";
+        const fullPath = join(destPath, repoName);
+
+        const cloneProcess = spawn("git", [
+          "clone",
+          "--progress",
+          url,
+          fullPath,
+        ]);
+
+        let errorOutput = "";
+
+        cloneProcess.stderr.on("data", (data: Buffer) => {
+          const message = data.toString();
+          errorOutput += message;
+
+          // Parse git clone progress
+          // Examples:
+          // "Cloning into 'repo'..."
+          // "remote: Counting objects: 100, done."
+          // "Receiving objects:  45% (450/1000)"
+          // "Resolving deltas: 100% (500/500), done."
+          let percent = 0;
+          let stage = "cloning";
+
+          if (message.includes("Counting objects")) {
+            stage = "counting";
+          } else if (message.includes("Compressing objects")) {
+            stage = "compressing";
+            const match = message.match(/Compressing objects:\s*(\d+)%/);
+            if (match) percent = parseInt(match[1], 10);
+          } else if (message.includes("Receiving objects")) {
+            stage = "receiving";
+            const match = message.match(/Receiving objects:\s*(\d+)%/);
+            if (match) percent = parseInt(match[1], 10);
+          } else if (message.includes("Resolving deltas")) {
+            stage = "resolving";
+            const match = message.match(/Resolving deltas:\s*(\d+)%/);
+            if (match) percent = parseInt(match[1], 10);
+          }
+
+          // Send progress to renderer
+          const windows = BrowserWindow.getAllWindows();
+          windows.forEach((win) => {
+            win.webContents.send("clone-progress", {
+              stage,
+              percent,
+              message: message.trim(),
+            });
+          });
+        });
+
+        cloneProcess.on("close", (code) => {
+          if (code === 0) {
+            resolve({ success: true, path: fullPath });
+          } else {
+            resolve({
+              success: false,
+              path: "",
+              error: errorOutput || `Clone failed with code ${code}`,
+            });
+          }
+        });
+
+        cloneProcess.on("error", (err) => {
+          resolve({
+            success: false,
+            path: "",
+            error: err.message,
+          });
+        });
+      });
     }
   );
 }
