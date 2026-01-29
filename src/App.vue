@@ -47,6 +47,15 @@
           <span class="nav-icon">◷</span>
           <span>TIMELINE</span>
         </router-link>
+
+        <router-link
+          to="/changes"
+          class="nav-item"
+          active-class="active"
+          :class="{ disabled: !hasRepository }">
+          <span class="nav-icon">⚡</span>
+          <span>CHANGES</span>
+        </router-link>
       </nav>
 
       <!-- Repository Info -->
@@ -58,7 +67,9 @@
           </div>
           <div class="repo-branch">
             <span class="branch-icon">⎇</span>
-            <span class="truncate">{{ repositoryStore.currentBranch }}</span>
+            <span class="truncate">{{
+              repositoryStore.selectedBranch || repositoryStore.currentBranch
+            }}</span>
           </div>
         </div>
       </div>
