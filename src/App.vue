@@ -67,9 +67,9 @@
     <!-- Main Content -->
     <main class="main-content">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
+        <keep-alive>
           <component :is="Component" />
-        </transition>
+        </keep-alive>
       </router-view>
     </main>
   </div>

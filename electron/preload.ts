@@ -10,8 +10,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("git:validateRepository", path),
 
   // Git operations
-  getCommits: (repoPath: string, limit?: number) =>
-    ipcRenderer.invoke("git:getCommits", repoPath, limit),
+  getCommits: (
+    repoPath: string,
+    limit?: number,
+    offset?: number,
+    branch?: string
+  ) => ipcRenderer.invoke("git:getCommits", repoPath, limit, offset, branch),
   getFileChanges: (repoPath: string, commitHash: string) =>
     ipcRenderer.invoke("git:getFileChanges", repoPath, commitHash),
   getRepositoryInfo: (repoPath: string) =>
@@ -20,6 +24,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("git:getGitGraph", repoPath, limit),
   cloneRepository: (url: string, destPath: string) =>
     ipcRenderer.invoke("git:cloneRepository", url, destPath),
+  getBranches: (repoPath: string) =>
+    ipcRenderer.invoke("git:getBranches", repoPath),
+  getStatus: (repoPath: string) =>
+    ipcRenderer.invoke("git:getStatus", repoPath),
+  checkoutBranch: (repoPath: string, branchName: string) =>
+    ipcRenderer.invoke("git:checkoutBranch", repoPath, branchName),
 
   // Analysis operations
   analyzeRepository: (repoPath: string) =>

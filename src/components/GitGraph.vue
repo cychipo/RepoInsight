@@ -191,9 +191,10 @@ async function loadGitGraph() {
 
   loading.value = true;
   try {
+    // Load all commits for the graph (limit=0 means no limit)
     commits.value = await window.electronAPI.getGitGraph(
       repositoryStore.currentRepository,
-      500
+      0
     );
     calculateBranchLanes();
   } catch (e) {
