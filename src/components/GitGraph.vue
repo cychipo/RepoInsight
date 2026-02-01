@@ -166,7 +166,6 @@ const repositoryStore = useRepositoryStore();
 const commits = ref<GitGraphCommit[]>([]);
 const loading = ref(false);
 const selectedCommit = ref<GitGraphCommit | null>(null);
-const scrollContainer = ref<HTMLElement | null>(null);
 
 // Branch lane tracking
 const commitColumns = ref<Map<string, number>>(new Map());

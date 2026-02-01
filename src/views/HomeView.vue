@@ -1,20 +1,26 @@
 <template>
-  <div class="home-view">
+  <div class="home-view p-4">
     <!-- Hero Section - Neo-Brutalism Style -->
-    <section class="hero">
-      <div class="hero-content animate-fadeIn">
-        <div class="hero-badge">GIT ANALYSIS TOOL</div>
-        <h1 class="hero-title">
+    <section class="grid grid-cols-2 gap-12 items-center min-h-[400px] mb-12">
+      <div class="max-w-[550px] animate-fadeIn">
+        <div
+          class="inline-block px-3 py-1 mb-2 text-xs font-bold bg-neo-black text-neo-white tracking-widest">
+          GIT ANALYSIS TOOL
+        </div>
+        <h1 class="text-5xl leading-none mb-4">
           EXPLORE YOUR
-          <span class="title-highlight">CODEBASE</span>
+          <span
+            class="block bg-neo-yellow px-4 py-2 border-4 border-neo-black shadow-brutal mt-2 w-fit"
+            >CODEBASE</span
+          >
         </h1>
-        <p class="hero-description">
+        <p class="text-lg mb-8 leading-relaxed">
           Analyze Git repositories and visualize code relationships as beautiful
           knowledge graphs. Discover hotspots, understand dependencies, and gain
           deep insights.
         </p>
 
-        <div class="hero-actions">
+        <div class="flex gap-4">
           <button
             class="btn btn-primary btn-lg"
             @click="handleSelectRepository"
@@ -33,60 +39,86 @@
           </button>
         </div>
 
-        <p v-if="repositoryStore.error" class="error-message">
+        <p
+          v-if="repositoryStore.error"
+          class="mt-4 px-4 py-2 bg-neo-red text-neo-white font-bold border-3 border-neo-black">
           ⚠ {{ repositoryStore.error }}
         </p>
       </div>
 
       <!-- Decorative Elements -->
-      <div class="hero-decoration">
-        <div class="deco-box box-1"></div>
-        <div class="deco-box box-2"></div>
-        <div class="deco-box box-3"></div>
-        <div class="deco-circle"></div>
+      <div class="relative h-[350px]">
+        <div
+          class="absolute w-[180px] h-[180px] bg-neo-yellow border-4 border-neo-black shadow-brutal-lg top-5 left-[20%] animate-bounce [animation-duration:3s]"></div>
+        <div
+          class="absolute w-[120px] h-[120px] bg-neo-pink border-4 border-neo-black shadow-brutal-lg top-[100px] right-[15%] animate-bounce [animation-duration:3s] [animation-delay:0.5s]"></div>
+        <div
+          class="absolute w-[80px] h-[80px] bg-neo-blue border-4 border-neo-black shadow-brutal-lg bottom-10 left-[30%] animate-bounce [animation-duration:3s] [animation-delay:1s]"></div>
+        <div
+          class="absolute w-[100px] h-[100px] bg-neo-green border-4 border-neo-black shadow-brutal-lg rounded-full bottom-20 right-[25%] animate-bounce [animation-duration:3s] [animation-delay:1.5s]"></div>
       </div>
     </section>
 
     <!-- Repository Info (if loaded) -->
     <section
       v-if="repositoryStore.currentRepository"
-      class="repo-section animate-fadeIn">
-      <div class="section-header">
+      class="flex flex-col gap-8 animate-fadeIn">
+      <div class="flex items-center justify-between">
         <h2>▤ CURRENT REPOSITORY</h2>
         <button class="btn btn-ghost" @click="repositoryStore.clearRepository">
           ✕ CLOSE
         </button>
       </div>
 
-      <div class="repo-card card card-accent-yellow">
-        <div class="repo-header">
-          <div class="repo-icon">◈</div>
+      <div class="flex flex-col gap-6 card card-accent-yellow">
+        <div class="flex items-center gap-4">
+          <div
+            class="text-3xl w-[60px] h-[60px] flex items-center justify-center bg-neo-yellow border-3 border-neo-black shadow-brutal">
+            ◈
+          </div>
           <div>
             <h3>{{ repositoryStore.repositoryName }}</h3>
-            <code class="repo-path">{{
-              repositoryStore.currentRepository
-            }}</code>
+            <code
+              class="text-xs bg-neo-black text-neo-yellow px-2 py-1 border-none"
+              >{{ repositoryStore.currentRepository }}</code
+            >
           </div>
         </div>
 
-        <div class="stats-grid">
-          <div class="stat-card" style="background: var(--neo-blue)">
-            <div class="stat-value">{{ repositoryStore.totalCommits }}</div>
-            <div class="stat-label">COMMITS</div>
+        <div class="grid grid-cols-3 gap-4">
+          <div
+            class="flex flex-col gap-1 p-4 bg-neo-blue border-3 border-neo-black shadow-brutal">
+            <div class="text-4xl font-bold leading-none">
+              {{ repositoryStore.totalCommits }}
+            </div>
+            <div
+              class="text-xs font-bold uppercase tracking-widest text-neo-white">
+              COMMITS
+            </div>
           </div>
-          <div class="stat-card" style="background: var(--neo-green)">
-            <div class="stat-value">
+          <div
+            class="flex flex-col gap-1 p-4 bg-neo-green border-3 border-neo-black shadow-brutal">
+            <div class="text-4xl font-bold leading-none">
               {{ repositoryStore.repositoryInfo?.totalContributors || "-" }}
             </div>
-            <div class="stat-label">CONTRIBUTORS</div>
+            <div
+              class="text-xs font-bold uppercase tracking-widest text-neo-black">
+              CONTRIBUTORS
+            </div>
           </div>
-          <div class="stat-card" style="background: var(--neo-pink)">
-            <div class="stat-value">{{ repositoryStore.currentBranch }}</div>
-            <div class="stat-label">BRANCH</div>
+          <div
+            class="flex flex-col gap-1 p-4 bg-neo-pink border-3 border-neo-black shadow-brutal">
+            <div class="text-4xl font-bold leading-none truncate">
+              {{ repositoryStore.currentBranch }}
+            </div>
+            <div
+              class="text-xs font-bold uppercase tracking-widest text-neo-white">
+              BRANCH
+            </div>
           </div>
         </div>
 
-        <div class="repo-actions">
+        <div class="flex gap-4 flex-wrap">
           <router-link to="/graph" class="btn btn-primary">
             ◈ VIEW GRAPH
           </router-link>
@@ -100,7 +132,7 @@
       </div>
 
       <!-- Recent Commits Preview -->
-      <div class="commits-preview card card-accent-blue">
+      <div class="card card-accent-blue">
         <div class="card-header">
           <h3 class="card-title">◷ RECENT COMMITS</h3>
           <router-link to="/timeline" class="btn btn-ghost">
@@ -108,24 +140,29 @@
           </router-link>
         </div>
 
-        <div class="commits-list">
+        <div class="flex flex-col gap-2">
           <div
             v-for="(commit, index) in recentCommits"
             :key="commit.hash"
-            class="commit-item"
+            class="flex items-center gap-4 p-2 bg-neo-white border-3 border-neo-black transition-all hover:bg-neo-yellow hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-brutal"
             :class="['stagger-' + (index + 1)]">
-            <div class="commit-hash">{{ commit.shortHash }}</div>
-            <div class="commit-info">
-              <div class="commit-message truncate">{{ commit.message }}</div>
-              <div class="commit-meta">
+            <div
+              class="font-mono text-xs font-bold bg-neo-blue px-2 py-1 border-2 border-neo-black">
+              {{ commit.shortHash }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold truncate">
+                {{ commit.message }}
+              </div>
+              <div class="flex gap-2 text-xs font-medium text-stone-500">
                 <span>{{ commit.author }}</span>
                 <span>•</span>
                 <span>{{ formatDate(commit.date) }}</span>
               </div>
             </div>
-            <div class="commit-stats">
-              <span class="stat-add">+{{ commit.insertions }}</span>
-              <span class="stat-del">-{{ commit.deletions }}</span>
+            <div class="flex gap-2 text-xs font-mono font-bold">
+              <span class="text-green-700">+{{ commit.insertions }}</span>
+              <span class="text-red-600">-{{ commit.deletions }}</span>
             </div>
           </div>
         </div>
@@ -134,29 +171,44 @@
       <!-- Uncommitted Changes -->
       <div
         v-if="repositoryStore.gitStatus.length > 0"
-        class="uncommitted-changes card card-accent-orange">
+        class="mt-4 card card-accent-orange">
         <div class="card-header">
           <h3 class="card-title">⚠ UNCOMMITTED CHANGES</h3>
-          <span class="changes-count"
+          <span
+            class="text-xs font-bold bg-neo-orange px-2 py-1 border-2 border-neo-black"
             >{{ repositoryStore.gitStatus.length }} FILES</span
           >
         </div>
 
-        <div class="changes-list">
+        <div class="flex flex-col gap-1">
           <div
             v-for="file in repositoryStore.gitStatus.slice(0, 10)"
             :key="file.path + file.staged"
-            class="change-item"
-            :class="{ staged: file.staged }">
-            <span class="change-status" :class="file.status">{{
-              file.status.toUpperCase().slice(0, 1)
+            class="flex items-center gap-2 px-2 py-1 bg-bg-primary border-2 border-transparent"
+            :class="{ 'border-neo-green bg-green-50': file.staged }">
+            <span
+              class="w-5 h-5 flex items-center justify-center text-[0.7rem] font-bold border-2 border-neo-black"
+              :class="{
+                'bg-neo-orange': file.status === 'modified',
+                'bg-neo-green': file.status === 'added',
+                'bg-neo-red text-white': file.status === 'deleted',
+                'bg-neo-blue': file.status === 'untracked',
+                'bg-neo-purple': file.status === 'renamed',
+              }"
+              >{{ file.status.toUpperCase().slice(0, 1) }}</span
+            >
+            <span class="flex-1 min-w-0 text-sm font-mono truncate">{{
+              file.path
             }}</span>
-            <span class="change-path truncate font-mono">{{ file.path }}</span>
-            <span class="change-staged" v-if="file.staged">STAGED</span>
+            <span
+              class="text-[0.65rem] font-bold bg-neo-green px-1.5 py-0.5 border-2 border-neo-black"
+              v-if="file.staged"
+              >STAGED</span
+            >
           </div>
           <div
             v-if="repositoryStore.gitStatus.length > 10"
-            class="more-changes">
+            class="text-sm text-stone-500 p-1">
             +{{ repositoryStore.gitStatus.length - 10 }} more files...
           </div>
         </div>
@@ -164,44 +216,52 @@
     </section>
 
     <!-- Features Section (when no repo) -->
-    <section v-else class="features-section">
-      <h2 class="section-title">▤ WHAT YOU CAN DO</h2>
-      <div class="features-grid">
-        <div class="feature-card card card-accent-blue">
-          <div class="feature-icon" style="background: var(--neo-blue)">◈</div>
-          <h3>KNOWLEDGE GRAPH</h3>
-          <p>
+    <section v-else class="mt-8">
+      <h2 class="text-center mb-8">▤ WHAT YOU CAN DO</h2>
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
+        <div class="flex flex-col gap-4 card card-accent-blue">
+          <div
+            class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-blue">
+            ◈
+          </div>
+          <h3 class="text-base m-0">KNOWLEDGE GRAPH</h3>
+          <p class="text-[0.9rem] m-0">
             Visualize relationships between commits, files, and functions as an
             interactive graph.
           </p>
         </div>
 
-        <div class="feature-card card card-accent-green">
-          <div class="feature-icon" style="background: var(--neo-green)">
+        <div class="flex flex-col gap-4 card card-accent-green">
+          <div
+            class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-green">
             ⚡
           </div>
-          <h3>CODE ANALYSIS</h3>
-          <p>
+          <h3 class="text-base m-0">CODE ANALYSIS</h3>
+          <p class="text-[0.9rem] m-0">
             Static analysis to extract functions, classes, and understand call
             relationships.
           </p>
         </div>
 
-        <div class="feature-card card card-accent-orange">
-          <div class="feature-icon" style="background: var(--neo-orange)">
+        <div class="flex flex-col gap-4 card card-accent-orange">
+          <div
+            class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-orange">
             ★
           </div>
-          <h3>HOTSPOT DETECTION</h3>
-          <p>
+          <h3 class="text-base m-0">HOTSPOT DETECTION</h3>
+          <p class="text-[0.9rem] m-0">
             Identify frequently modified files and functions that may need
             attention.
           </p>
         </div>
 
-        <div class="feature-card card card-accent-pink">
-          <div class="feature-icon" style="background: var(--neo-pink)">◷</div>
-          <h3>TIMELINE VIEW</h3>
-          <p>
+        <div class="flex flex-col gap-4 card card-accent-pink">
+          <div
+            class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-pink">
+            ◷
+          </div>
+          <h3 class="text-base m-0">TIMELINE VIEW</h3>
+          <p class="text-[0.9rem] m-0">
             Explore how your codebase evolved over time with commit timeline
             visualization.
           </p>
@@ -212,39 +272,44 @@
     <!-- Clone Modal -->
     <div
       v-if="showCloneModal"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6"
       @click.self="closeCloneModal">
-      <div class="modal card">
-        <div class="modal-header">
-          <h2>↓ CLONE FROM URL</h2>
+      <div class="w-full max-w-[500px] max-h-[90vh] overflow-y-auto card">
+        <div
+          class="flex items-center justify-between pb-4 mb-6 border-b-3 border-neo-black">
+          <h2 class="m-0 text-xl">↓ CLONE FROM URL</h2>
           <button class="btn btn-icon btn-ghost" @click="closeCloneModal">
             ✕
           </button>
         </div>
 
-        <div class="modal-body">
-          <div class="form-group">
-            <label>GIT REPOSITORY URL</label>
+        <div class="flex flex-col gap-6">
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-bold tracking-wider"
+              >GIT REPOSITORY URL</label
+            >
             <input
               type="text"
               v-model="cloneUrl"
               placeholder="https://github.com/user/repo.git"
-              class="input"
+              class="input text-base"
               :disabled="isCloning" />
           </div>
 
-          <div class="form-group">
-            <label>DESTINATION FOLDER</label>
-            <div class="input-with-btn">
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-bold tracking-wider"
+              >DESTINATION FOLDER</label
+            >
+            <div class="flex gap-0">
               <input
                 type="text"
                 v-model="cloneDestPath"
                 placeholder="Select destination folder..."
-                class="input"
+                class="input flex-1 border-r-0 text-base"
                 readonly
                 :disabled="isCloning" />
               <button
-                class="btn btn-secondary"
+                class="btn btn-secondary border-l-3 border-neo-black"
                 @click="selectCloneDestination"
                 :disabled="isCloning">
                 BROWSE
@@ -253,26 +318,36 @@
           </div>
 
           <!-- Progress -->
-          <div v-if="isCloning" class="clone-progress">
-            <div class="progress-header">
-              <span class="progress-stage">{{
+          <div
+            v-if="isCloning"
+            class="p-4 bg-neo-blue border-3 border-neo-black">
+            <div class="flex justify-between mb-2 font-bold text-sm">
+              <span class="uppercase">{{
                 cloneProgress.stage.toUpperCase()
               }}</span>
-              <span class="progress-percent">{{ cloneProgress.percent }}%</span>
+              <span class="font-mono">{{ cloneProgress.percent }}%</span>
             </div>
-            <div class="progress-bar">
+            <div
+              class="h-3 bg-neo-white border-2 border-neo-black overflow-hidden">
               <div
-                class="progress-fill"
+                class="h-full bg-neo-green transition-all duration-300 ease-out"
                 :style="{ width: cloneProgress.percent + '%' }"></div>
             </div>
-            <p class="progress-message">{{ cloneProgress.message }}</p>
+            <p class="mt-2 text-xs font-mono break-all">
+              {{ cloneProgress.message }}
+            </p>
           </div>
 
           <!-- Error -->
-          <p v-if="cloneError" class="error-message">⚠ {{ cloneError }}</p>
+          <p
+            v-if="cloneError"
+            class="px-4 py-2 bg-neo-red text-neo-white font-bold border-3 border-neo-black">
+            ⚠ {{ cloneError }}
+          </p>
         </div>
 
-        <div class="modal-footer">
+        <div
+          class="flex justify-end gap-4 mt-8 pt-6 border-t-3 border-neo-black">
           <button
             class="btn btn-ghost"
             @click="closeCloneModal"
@@ -420,511 +495,4 @@ function formatDate(date: Date | string): string {
   return d.toLocaleDateString();
 }
 </script>
-
-<style scoped>
-.home-view {
-  min-height: 100%;
-  padding: var(--spacing-2xl);
-}
-
-/* Hero Section */
-.hero {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-2xl);
-  align-items: center;
-  min-height: 400px;
-  margin-bottom: var(--spacing-2xl);
-}
-
-.hero-content {
-  max-width: 550px;
-}
-
-.hero-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  margin-bottom: var(--spacing-md);
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: var(--neo-black);
-  color: var(--neo-white);
-  letter-spacing: 0.1em;
-}
-
-.hero-title {
-  font-size: 3rem;
-  line-height: 1;
-  margin-bottom: var(--spacing-lg);
-}
-
-.title-highlight {
-  display: block;
-  background: var(--neo-yellow);
-  padding: 8px 16px;
-  border: 4px solid var(--neo-black);
-  box-shadow: 6px 6px 0 var(--neo-black);
-  margin-top: var(--spacing-sm);
-}
-
-.hero-description {
-  font-size: 1.1rem;
-  margin-bottom: var(--spacing-xl);
-  line-height: 1.6;
-}
-
-.hero-actions {
-  display: flex;
-  gap: var(--spacing-md);
-}
-
-.error-message {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--neo-red);
-  color: var(--neo-white);
-  font-weight: 700;
-  border: 3px solid var(--neo-black);
-}
-
-/* Decorative Elements */
-.hero-decoration {
-  position: relative;
-  height: 350px;
-}
-
-.deco-box {
-  position: absolute;
-  border: 4px solid var(--neo-black);
-  box-shadow: 6px 6px 0 var(--neo-black);
-}
-
-.box-1 {
-  width: 180px;
-  height: 180px;
-  background: var(--neo-yellow);
-  top: 20px;
-  left: 20%;
-  animation: float 3s ease-in-out infinite;
-}
-
-.box-2 {
-  width: 120px;
-  height: 120px;
-  background: var(--neo-pink);
-  top: 100px;
-  right: 15%;
-  animation: float 3s ease-in-out infinite 0.5s;
-}
-
-.box-3 {
-  width: 80px;
-  height: 80px;
-  background: var(--neo-blue);
-  bottom: 40px;
-  left: 30%;
-  animation: float 3s ease-in-out infinite 1s;
-}
-
-.deco-circle {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  border: 4px solid var(--neo-black);
-  border-radius: 50%;
-  background: var(--neo-green);
-  box-shadow: 6px 6px 0 var(--neo-black);
-  bottom: 80px;
-  right: 25%;
-  animation: float 3s ease-in-out infinite 1.5s;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
-}
-
-/* Repo Section */
-.repo-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.repo-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.repo-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.repo-icon {
-  font-size: 2rem;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--neo-yellow);
-  border: 3px solid var(--neo-black);
-  box-shadow: 4px 4px 0 var(--neo-black);
-}
-
-.repo-header h3 {
-  font-size: 1.5rem;
-  margin: 0;
-}
-
-.repo-path {
-  font-size: 0.8rem;
-  background: var(--neo-black);
-  color: var(--neo-yellow);
-  padding: 4px 8px;
-  border: none;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-md);
-}
-
-.repo-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-/* Commits Preview */
-.commits-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.commit-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-primary);
-  border: 3px solid var(--neo-black);
-  transition: all var(--transition-fast);
-}
-
-.commit-item:hover {
-  background: var(--neo-yellow);
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0 var(--neo-black);
-}
-
-.commit-hash {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: var(--neo-blue);
-  padding: 4px 8px;
-  border: 2px solid var(--neo-black);
-}
-
-.commit-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.commit-message {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.commit-meta {
-  display: flex;
-  gap: var(--spacing-xs);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.commit-stats {
-  display: flex;
-  gap: var(--spacing-sm);
-  font-size: 0.8rem;
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
-
-.stat-add {
-  color: #006600;
-}
-.stat-del {
-  color: #cc0000;
-}
-
-/* Features Section */
-.features-section {
-  margin-top: var(--spacing-2xl);
-}
-
-.section-title {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-lg);
-}
-
-.feature-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.feature-icon {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  border: 3px solid var(--neo-black);
-  box-shadow: 4px 4px 0 var(--neo-black);
-}
-
-.feature-card h3 {
-  font-size: 1rem;
-  margin: 0;
-}
-
-.feature-card p {
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--spacing-lg);
-}
-
-.modal {
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: var(--spacing-md);
-  border-bottom: 3px solid var(--neo-black);
-  margin-bottom: var(--spacing-lg);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
-  border-top: 3px solid var(--neo-black);
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.form-group label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.input {
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-family: var(--font-sans);
-  font-size: 0.9rem;
-  border: 3px solid var(--neo-black);
-  background: var(--neo-white);
-  outline: none;
-  transition: all var(--transition-fast);
-}
-
-.input:focus {
-  box-shadow: 4px 4px 0 var(--neo-black);
-}
-
-.input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.input-with-btn {
-  display: flex;
-  gap: 0;
-}
-
-.input-with-btn .input {
-  flex: 1;
-  border-right: none;
-}
-
-.input-with-btn .btn {
-  border-left: 3px solid var(--neo-black);
-}
-
-/* Clone Progress */
-.clone-progress {
-  padding: var(--spacing-md);
-  background: var(--neo-blue);
-  border: 3px solid var(--neo-black);
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.progress-bar {
-  height: 12px;
-  background: var(--neo-white);
-  border: 2px solid var(--neo-black);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--neo-green);
-  transition: width 0.3s ease;
-}
-
-.progress-message {
-  margin-top: var(--spacing-sm);
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  word-break: break-all;
-}
-
-/* Uncommitted Changes */
-.uncommitted-changes {
-  margin-top: var(--spacing-md);
-}
-
-.changes-count {
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: var(--neo-orange);
-  padding: 4px 8px;
-  border: 2px solid var(--neo-black);
-}
-
-.changes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.change-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--bg-primary);
-  border: 2px solid transparent;
-}
-
-.change-item.staged {
-  border-color: var(--neo-green);
-  background: rgba(0, 255, 128, 0.1);
-}
-
-.change-status {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  border: 2px solid var(--neo-black);
-}
-
-.change-status.modified {
-  background: var(--neo-orange);
-}
-
-.change-status.added {
-  background: var(--neo-green);
-}
-
-.change-status.deleted {
-  background: var(--neo-red);
-  color: white;
-}
-
-.change-status.untracked {
-  background: var(--neo-blue);
-}
-
-.change-path {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.8rem;
-}
-
-.change-staged {
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: var(--neo-green);
-  padding: 2px 6px;
-  border: 2px solid var(--neo-black);
-}
-
-.more-changes {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  padding: var(--spacing-xs);
-}
-</style>
+```

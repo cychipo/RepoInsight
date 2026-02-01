@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, IpcMainInvokeEvent } from "electron";
+import { ipcMain, BrowserWindow } from "electron";
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import { join, basename, extname } from "path";
@@ -334,7 +334,6 @@ export function registerGitHandlers() {
         const nodes: GraphNode[] = [];
         const edges: GraphEdge[] = [];
         const fileModifyCount = new Map<string, number>();
-        const functionModifyCount = new Map<string, number>();
 
         // Create commit nodes
         for (let i = 0; i < commitLines.length; i++) {
@@ -453,33 +452,54 @@ export function registerGitHandlers() {
 
           try {
             const content = await readFile(fullPath, "utf-8");
+            // const functions = extractFunctions(content); - Removed duplicate
+
             const functions = extractFunctions(content);
 
-            for (const func of functions) {
-              const funcId = `function:${filePath}:${func.name}`;
+            // Process functions in parallel (limited by file scope)
+            await Promise.all(
+              functions.map(async (func) => {
+                const funcId = `function:${filePath}:${func.name}`;
+                let modifyCount = 0;
 
-              nodes.push({
-                id: funcId,
-                type: "function",
-                label: func.name,
-                metadata: {
-                  name: func.name,
-                  filePath,
-                  startLine: func.startLine,
-                  endLine: func.endLine,
-                  parameters: func.parameters,
-                  modifyCount: 0,
-                },
-              });
+                try {
+                  // Calculate modification count using git log -L
+                  // This tracks the history of the lines that make up the function
+                  const logOutput = await runGitCommand(
+                    repoPath,
+                    `log -L ${func.startLine},${func.endLine}:"${filePath}" --format="COMMIT:%H"`
+                  );
+                  // Count unique commits that touched these lines
+                  modifyCount = (logOutput.match(/COMMIT:[a-f0-9]+/g) || [])
+                    .length;
+                } catch (e) {
+                  // If detailed history fails (e.g. invalid range),
+                  // we'll leave modifyCount at 0 or minimal fallback
+                }
 
-              // Create CONTAINS edge
-              edges.push({
-                id: `edge:${fileNode.id}-${funcId}`,
-                source: fileNode.id,
-                target: funcId,
-                type: "CONTAINS",
-              });
-            }
+                nodes.push({
+                  id: funcId,
+                  type: "function",
+                  label: func.name,
+                  metadata: {
+                    name: func.name,
+                    filePath,
+                    startLine: func.startLine,
+                    endLine: func.endLine,
+                    parameters: func.parameters,
+                    modifyCount,
+                  },
+                });
+
+                // Create CONTAINS edge
+                edges.push({
+                  id: `edge:${fileNode.id}-${funcId}`,
+                  source: fileNode.id,
+                  target: funcId,
+                  type: "CONTAINS",
+                });
+              })
+            );
           } catch (e) {
             // Skip files that can't be read
           }
