@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between flex-wrap gap-4">
       <div class="flex items-center gap-6">
         <h1 class="text-2xl font-bold uppercase">
-          {{ viewMode === "knowledge" ? "◈ KNOWLEDGE GRAPH" : "◈ GIT GRAPH" }}
+          {{ viewMode === "knowledge" ? "◈ BIỂU ĐỒ TRI THỨC" : "◈ BIỂU ĐỒ GIT" }}
         </h1>
         <div class="flex gap-0">
           <button
@@ -13,7 +13,7 @@
                 viewMode === 'knowledge',
             }"
             @click="viewMode = 'knowledge'">
-            KNOWLEDGE
+            TRI THỨC
           </button>
           <button
             class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-neo-yellow"
@@ -21,7 +21,7 @@
               '!bg-neo-blue shadow-[inset_0_0_0_2px_black]': viewMode === 'git',
             }"
             @click="viewMode = 'git'">
-            GIT GRAPH
+            BIỂU ĐỒ GIT
           </button>
         </div>
       </div>
@@ -30,24 +30,28 @@
           <button
             v-for="nodeType in nodeTypes"
             :key="nodeType.id"
-            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 hover:bg-[var(--filter-color)]"
+            class="px-4 py-2 font-sans text-xs font-bold bg-neo-white border-3 border-neo-black cursor-pointer transition-all -ml-[3px] first:ml-0 flex items-center gap-2 hover:bg-[var(--filter-color)]"
             :class="{
               '!bg-[var(--filter-color)] shadow-[inset_0_0_0_2px_black]':
                 activeFilters.includes(nodeType.id),
+              'opacity-60': !activeFilters.includes(nodeType.id),
             }"
             :style="{ '--filter-color': nodeType.color }"
             @click="toggleFilter(nodeType.id)">
+            <span
+              class="w-3 h-3 border-2 border-neo-black"
+              :style="{ background: nodeType.color }"></span>
             {{ nodeType.label }}
           </button>
         </div>
         <button class="btn btn-secondary" @click="resetView">
-          ↻ RESET VIEW
+          ↻ ĐẶT LẠI GÓC NHÌN
         </button>
       </div>
     </div>
 
     <!-- Knowledge Graph View -->
-    <template v-if="viewMode === 'knowledge'">
+    <div v-show="viewMode === 'knowledge'" class="flex-1 flex flex-col min-h-0">
       <div class="flex-1 flex gap-6 min-h-0">
         <!-- Graph Canvas -->
         <div
@@ -57,13 +61,12 @@
             v-if="!graphStore.hasData"
             class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center p-6">
             <div class="text-6xl opacity-30">◈</div>
-            <h3 class="text-xl font-bold m-0">NO GRAPH DATA</h3>
+            <h3 class="text-xl font-bold m-0">KHÔNG CÓ DỮ LIỆU BIỂU ĐỒ</h3>
             <p>
-              Select a repository from the home page to generate the knowledge
-              graph.
+              Chọn một kho chứa từ trang chủ để tạo biểu đồ tri thức.
             </p>
             <router-link to="/" class="btn btn-primary">
-              ◆ OPEN REPOSITORY
+              ◆ MỞ KHO CHỨA
             </router-link>
           </div>
         </div>
@@ -101,7 +104,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >AUTHOR</span
+                    >TÁC GIẢ</span
                   >
                   <span class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.author
@@ -109,7 +112,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >DATE</span
+                    >NGÀY</span
                   >
                   <span class="text-sm font-semibold break-all">{{
                     formatDate(selectedNode.metadata.date)
@@ -117,7 +120,7 @@
                 </div>
                 <div class="flex flex-col gap-1 col-span-full">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >MESSAGE</span
+                    >NỘI DUNG</span
                   >
                   <p class="text-sm font-semibold break-all">
                     {{ selectedNode.metadata.message }}
@@ -128,7 +131,7 @@
               <template v-else-if="selectedNode.type === 'file'">
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >PATH</span
+                    >ĐƯỜNG DẪN</span
                   >
                   <code class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.path
@@ -136,7 +139,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >LANGUAGE</span
+                    >NGÔN NGỮ</span
                   >
                   <span class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.language
@@ -144,7 +147,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >MODIFICATIONS</span
+                    >SỬA ĐỔI</span
                   >
                   <span
                     class="text-sm font-semibold break-all bg-neo-yellow px-1 inline-block w-max"
@@ -156,7 +159,7 @@
               <template v-else-if="selectedNode.type === 'function'">
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >NAME</span
+                    >TÊN</span
                   >
                   <code class="text-sm font-semibold break-all">{{
                     selectedNode.metadata.name
@@ -164,7 +167,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >FILE</span
+                    >TỆP</span
                   >
                   <code class="text-sm font-semibold break-all truncate">{{
                     selectedNode.metadata.filePath
@@ -172,7 +175,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >LINES</span
+                    >DÒNG</span
                   >
                   <span class="text-sm font-semibold break-all"
                     >{{ selectedNode.metadata.startLine }} -
@@ -181,7 +184,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >MODIFICATIONS</span
+                    >SỬA ĐỔI</span
                   >
                   <span
                     class="text-sm font-semibold break-all bg-neo-yellow px-1 inline-block w-max"
@@ -196,33 +199,33 @@
 
       <!-- Graph Legend -->
       <div
-        class="flex items-center gap-6 p-4 bg-neo-white border-3 border-neo-black shadow-brutal">
+        class="flex items-center gap-6 p-4 mt-6 bg-neo-white border-3 border-neo-black shadow-brutal">
         <div class="text-xs font-bold pr-4 border-r-3 border-neo-black">
-          LEGEND
+          CHÚ GIẢI
         </div>
         <div class="flex items-center gap-6">
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span
-              class="w-[14px] h-[14px] border-2 border-neo-black"
-              style="background: var(--neo-blue)"></span>
+              class="w-[14px] h-[14px] border-2 border-neo-black *bg-neo-blue"
+              style="background: #00d4ff !important"></span>
             <span>COMMIT</span>
           </div>
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span
-              class="w-[14px] h-[14px] border-2 border-neo-black"
-              style="background: var(--neo-green)"></span>
-            <span>FILE</span>
+              class="w-[14px] h-[14px] border-2 border-neo-black *bg-neo-green"
+              style="background: #7cff6b !important"></span>
+            <span>TỆP</span>
           </div>
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span
               class="w-[14px] h-[14px] border-2 border-neo-black"
-              style="background: var(--neo-orange)"></span>
-            <span>FUNCTION</span>
+              style="background: #ff9e2c !important"></span>
+            <span>HÀM</span>
           </div>
           <div class="w-[3px] h-5 bg-neo-black"></div>
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span class="w-6 h-[3px] bg-neo-black"></span>
-            <span>MODIFIES</span>
+            <span>SỬA ĐỔI</span>
           </div>
           <div class="flex items-center gap-2 text-xs font-semibold">
             <span
@@ -236,16 +239,16 @@
                   transparent 8px
                 );
               "></span>
-            <span>CONTAINS</span>
+            <span>CHỨA</span>
           </div>
         </div>
       </div>
-    </template>
+    </div>
 
     <!-- Git Graph View -->
-    <template v-else>
+    <div v-show="viewMode === 'git'" class="flex-1 min-h-0">
       <GitGraph />
-    </template>
+    </div>
   </div>
 </template>
 
@@ -263,8 +266,8 @@ const viewMode = ref<"knowledge" | "git">("git"); // Default to git graph
 
 const nodeTypes = [
   { id: "commit", label: "COMMITS", color: "var(--neo-blue)" },
-  { id: "file", label: "FILES", color: "var(--neo-green)" },
-  { id: "function", label: "FUNCTIONS", color: "var(--neo-orange)" },
+  { id: "file", label: "TỆP", color: "var(--neo-green)" },
+  { id: "function", label: "HÀM", color: "var(--neo-orange)" },
 ];
 
 let cy: any = null;

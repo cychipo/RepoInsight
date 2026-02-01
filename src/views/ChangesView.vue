@@ -1,14 +1,14 @@
 <template>
-  <div class="p-6 max-w-[1000px]">
+  <div class="p-4">
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-2xl font-bold uppercase tracking-tight">
-        ⚡ UNCOMMITTED CHANGES
+        ⚡ THAY ĐỔI CHƯA COMMIT
       </h1>
       <button
         class="btn btn-secondary"
         @click="refreshStatus"
         :disabled="isLoading">
-        ↻ REFRESH
+        ↻ LÀM MỚI
       </button>
     </div>
 
@@ -17,12 +17,12 @@
       v-if="!repositoryStore.hasRepository"
       class="flex flex-col items-center justify-center p-12 text-center gap-4 card">
       <div class="text-5xl mb-2">⚡</div>
-      <h3 class="text-xl font-bold">NO REPOSITORY SELECTED</h3>
+      <h3 class="text-xl font-bold">CHƯA CHỌN KHO CHỨA</h3>
       <p class="font-medium text-stone-600">
-        Select a repository from the home page to view changes.
+        Chọn một kho chứa từ trang chủ để xem thay đổi.
       </p>
       <router-link to="/" class="btn btn-primary"
-        >◆ OPEN REPOSITORY</router-link
+        >◆ MỞ KHO CHỨA</router-link
       >
     </div>
 
@@ -31,9 +31,9 @@
       v-else-if="repositoryStore.gitStatus.length === 0"
       class="flex flex-col items-center justify-center p-12 text-center gap-4 card">
       <div class="text-5xl mb-2">✓</div>
-      <h3 class="text-xl font-bold">NO UNCOMMITTED CHANGES</h3>
+      <h3 class="text-xl font-bold">KHÔNG CÓ THAY ĐỔI CHƯA COMMIT</h3>
       <p class="font-medium text-stone-600">
-        Working directory is clean. All changes have been committed.
+        Thư mục làm việc sạch sẽ. Tất cả thay đổi đã được commit.
       </p>
     </div>
 
@@ -42,9 +42,9 @@
       <!-- Staged Changes -->
       <section v-if="stagedChanges.length > 0" class="flex flex-col gap-4">
         <div class="flex items-center gap-4">
-          <h2 class="text-lg font-bold">✓ STAGED CHANGES</h2>
+          <h2 class="text-lg font-bold">✓ THAY ĐỔI ĐÃ STAGE</h2>
           <span class="badge badge-green"
-            >{{ stagedChanges.length }} FILES</span
+            >{{ stagedChanges.length }} TỆP</span
           >
         </div>
         <div
@@ -77,9 +77,9 @@
       <!-- Unstaged Changes -->
       <section v-if="unstagedChanges.length > 0" class="flex flex-col gap-4">
         <div class="flex items-center gap-4">
-          <h2 class="text-lg font-bold">○ UNSTAGED CHANGES</h2>
+          <h2 class="text-lg font-bold">○ THAY ĐỔI CHƯA STAGE</h2>
           <span class="badge badge-orange"
-            >{{ unstagedChanges.length }} FILES</span
+            >{{ unstagedChanges.length }} TỆP</span
           >
         </div>
         <div

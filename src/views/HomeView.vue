@@ -5,19 +5,19 @@
       <div class="max-w-[550px] animate-fadeIn">
         <div
           class="inline-block px-3 py-1 mb-2 text-xs font-bold bg-neo-black text-neo-white tracking-widest">
-          GIT ANALYSIS TOOL
+           GIT ANALYSIS TOOL
         </div>
         <h1 class="text-5xl leading-none mb-4">
-          EXPLORE YOUR
+          KHÁM PHÁ
           <span
             class="block bg-neo-yellow px-4 py-2 border-4 border-neo-black shadow-brutal mt-2 w-fit"
-            >CODEBASE</span
+            >MÃ NGUỒN</span
           >
         </h1>
         <p class="text-lg mb-8 leading-relaxed">
-          Analyze Git repositories and visualize code relationships as beautiful
-          knowledge graphs. Discover hotspots, understand dependencies, and gain
-          deep insights.
+          Phân tích kho chứa Git và trực quan hóa mối quan hệ mã nguồn dưới dạng biểu đồ
+          tri thức đẹp mắt. Khám phá các điểm nóng, hiểu các phụ thuộc và có được
+          cái nhìn sâu sắc.
         </p>
 
         <div class="flex gap-4">
@@ -25,17 +25,17 @@
             class="btn btn-primary btn-lg"
             @click="handleSelectRepository"
             :disabled="repositoryStore.isLoading">
-            <span v-if="!repositoryStore.isLoading">◆ OPEN REPOSITORY</span>
+            <span v-if="!repositoryStore.isLoading">◆ MỞ KHO CHỨA</span>
             <span v-else class="flex items-center gap-2">
               <span class="loader" style="width: 20px; height: 20px"></span>
-              LOADING...
+              ĐANG TẢI...
             </span>
           </button>
           <button
             class="btn btn-secondary btn-lg"
             @click="showCloneModal = true"
             :disabled="isCloning">
-            ↓ CLONE FROM URL
+            ↓ SAO CHÉP TỪ URL
           </button>
         </div>
 
@@ -64,9 +64,9 @@
       v-if="repositoryStore.currentRepository"
       class="flex flex-col gap-8 animate-fadeIn">
       <div class="flex items-center justify-between">
-        <h2>▤ CURRENT REPOSITORY</h2>
+        <h2>▤ KHO CHỨA HIỆN TẠI</h2>
         <button class="btn btn-ghost" @click="repositoryStore.clearRepository">
-          ✕ CLOSE
+          ✕ ĐÓNG
         </button>
       </div>
 
@@ -103,7 +103,7 @@
             </div>
             <div
               class="text-xs font-bold uppercase tracking-widest text-neo-black">
-              CONTRIBUTORS
+              NGƯỜI ĐÓNG GÓP
             </div>
           </div>
           <div
@@ -113,20 +113,20 @@
             </div>
             <div
               class="text-xs font-bold uppercase tracking-widest text-neo-white">
-              BRANCH
+              NHÁNH
             </div>
           </div>
         </div>
 
         <div class="flex gap-4 flex-wrap">
           <router-link to="/graph" class="btn btn-primary">
-            ◈ VIEW GRAPH
+            ◈ XEM BIỂU ĐỒ
           </router-link>
           <router-link to="/analysis" class="btn btn-secondary">
-            ▤ ANALYSIS
+            ▤ PHÂN TÍCH
           </router-link>
           <router-link to="/timeline" class="btn btn-secondary">
-            ◷ TIMELINE
+            ◷ DÒNG THỜI GIAN
           </router-link>
         </div>
       </div>
@@ -134,9 +134,9 @@
       <!-- Recent Commits Preview -->
       <div class="card card-accent-blue">
         <div class="card-header">
-          <h3 class="card-title">◷ RECENT COMMITS</h3>
+          <h3 class="card-title">◷ COMMITS GẦN ĐÂY</h3>
           <router-link to="/timeline" class="btn btn-ghost">
-            VIEW ALL →
+            XEM TẤT CẢ →
           </router-link>
         </div>
 
@@ -173,10 +173,10 @@
         v-if="repositoryStore.gitStatus.length > 0"
         class="mt-4 card card-accent-orange">
         <div class="card-header">
-          <h3 class="card-title">⚠ UNCOMMITTED CHANGES</h3>
+          <h3 class="card-title">⚠ THAY ĐỔI CHƯA COMMIT</h3>
           <span
             class="text-xs font-bold bg-neo-orange px-2 py-1 border-2 border-neo-black"
-            >{{ repositoryStore.gitStatus.length }} FILES</span
+            >{{ repositoryStore.gitStatus.length }} TỆP</span
           >
         </div>
 
@@ -203,13 +203,13 @@
             <span
               class="text-[0.65rem] font-bold bg-neo-green px-1.5 py-0.5 border-2 border-neo-black"
               v-if="file.staged"
-              >STAGED</span
+              >ĐÃ STAGE</span
             >
           </div>
           <div
             v-if="repositoryStore.gitStatus.length > 10"
             class="text-sm text-stone-500 p-1">
-            +{{ repositoryStore.gitStatus.length - 10 }} more files...
+            +{{ repositoryStore.gitStatus.length - 10 }} tệp khác...
           </div>
         </div>
       </div>
@@ -217,17 +217,16 @@
 
     <!-- Features Section (when no repo) -->
     <section v-else class="mt-8">
-      <h2 class="text-center mb-8">▤ WHAT YOU CAN DO</h2>
+      <h2 class="text-center mb-8">▤ BẠN CÓ THỂ LÀM GÌ</h2>
       <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
         <div class="flex flex-col gap-4 card card-accent-blue">
           <div
             class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-blue">
             ◈
           </div>
-          <h3 class="text-base m-0">KNOWLEDGE GRAPH</h3>
+          <h3 class="text-base m-0">BIỂU ĐỒ TRI THỨC</h3>
           <p class="text-[0.9rem] m-0">
-            Visualize relationships between commits, files, and functions as an
-            interactive graph.
+            Trực quan hóa mối quan hệ giữa các commit, tệp và hàm dưới dạng biểu đồ tương tác.
           </p>
         </div>
 
@@ -236,10 +235,9 @@
             class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-green">
             ⚡
           </div>
-          <h3 class="text-base m-0">CODE ANALYSIS</h3>
+          <h3 class="text-base m-0">PHÂN TÍCH MÃ</h3>
           <p class="text-[0.9rem] m-0">
-            Static analysis to extract functions, classes, and understand call
-            relationships.
+            Phân tích tĩnh để trích xuất các hàm, lớp và hiểu các mối quan hệ gọi hàm.
           </p>
         </div>
 
@@ -248,10 +246,9 @@
             class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-orange">
             ★
           </div>
-          <h3 class="text-base m-0">HOTSPOT DETECTION</h3>
+          <h3 class="text-base m-0">PHÁT HIỆN ĐIỂM NÓNG</h3>
           <p class="text-[0.9rem] m-0">
-            Identify frequently modified files and functions that may need
-            attention.
+            Xác định các tệp và hàm thường xuyên được sửa đổi cần được chú ý.
           </p>
         </div>
 
@@ -260,10 +257,9 @@
             class="w-14 h-14 flex items-center justify-center text-2xl border-3 border-neo-black shadow-brutal bg-neo-pink">
             ◷
           </div>
-          <h3 class="text-base m-0">TIMELINE VIEW</h3>
+          <h3 class="text-base m-0">XEM DÒNG THỜI GIAN</h3>
           <p class="text-[0.9rem] m-0">
-            Explore how your codebase evolved over time with commit timeline
-            visualization.
+            Khám phá cách mã nguồn của bạn phát triển theo thời gian với trực quan hóa dòng thời gian commit.
           </p>
         </div>
       </div>
@@ -277,7 +273,7 @@
       <div class="w-full max-w-[500px] max-h-[90vh] overflow-y-auto card">
         <div
           class="flex items-center justify-between pb-4 mb-6 border-b-3 border-neo-black">
-          <h2 class="m-0 text-xl">↓ CLONE FROM URL</h2>
+          <h2 class="m-0 text-xl">↓ SAO CHÉP TỪ URL</h2>
           <button class="btn btn-icon btn-ghost" @click="closeCloneModal">
             ✕
           </button>
@@ -286,7 +282,7 @@
         <div class="flex flex-col gap-6">
           <div class="flex flex-col gap-2">
             <label class="text-xs font-bold tracking-wider"
-              >GIT REPOSITORY URL</label
+              >ĐƯỜNG DẪN KHO GIT</label
             >
             <input
               type="text"
@@ -298,13 +294,13 @@
 
           <div class="flex flex-col gap-2">
             <label class="text-xs font-bold tracking-wider"
-              >DESTINATION FOLDER</label
+              >THƯ MỤC ĐÍCH</label
             >
             <div class="flex gap-0">
               <input
                 type="text"
                 v-model="cloneDestPath"
-                placeholder="Select destination folder..."
+                placeholder="Chọn thư mục đích..."
                 class="input flex-1 border-r-0 text-base"
                 readonly
                 :disabled="isCloning" />
@@ -312,7 +308,7 @@
                 class="btn btn-secondary border-l-3 border-neo-black"
                 @click="selectCloneDestination"
                 :disabled="isCloning">
-                BROWSE
+                CHỌN
               </button>
             </div>
           </div>
@@ -352,14 +348,14 @@
             class="btn btn-ghost"
             @click="closeCloneModal"
             :disabled="isCloning">
-            CANCEL
+            HỦY
           </button>
           <button
             class="btn btn-primary"
             @click="handleClone"
             :disabled="!cloneUrl || !cloneDestPath || isCloning">
-            <span v-if="isCloning">CLONING...</span>
-            <span v-else>↓ START CLONE</span>
+            <span v-if="isCloning">ĐANG SAO CHÉP...</span>
+            <span v-else>↓ BẮT ĐẦU SAO CHÉP</span>
           </button>
         </div>
       </div>
@@ -434,7 +430,7 @@ async function handleClone() {
   cloneProgress.value = {
     stage: "cloning",
     percent: 0,
-    message: "Starting clone...",
+    message: "Bắt đầu sao chép...",
   };
 
   // Set up progress listener
@@ -461,10 +457,10 @@ async function handleClone() {
       await repositoryStore.setRepository(result.path);
       return;
     } else {
-      cloneError.value = result.error || "Clone failed";
+      cloneError.value = result.error || "Sao chép thất bại";
     }
   } catch (e) {
-    cloneError.value = e instanceof Error ? e.message : "Clone failed";
+    cloneError.value = e instanceof Error ? e.message : "Sao chép thất bại";
   } finally {
     isCloning.value = false;
     window.electronAPI.removeCloneProgressListener();
