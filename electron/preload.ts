@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("git:getStatus", repoPath),
   checkoutBranch: (repoPath: string, branchName: string) =>
     ipcRenderer.invoke("git:checkoutBranch", repoPath, branchName),
+  rebase: (repoPath: string) => ipcRenderer.invoke("git:rebase", repoPath),
 
   // Analysis operations
   analyzeRepository: (repoPath: string) =>

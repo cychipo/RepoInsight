@@ -4,12 +4,20 @@
       <h1 class="text-2xl font-bold uppercase tracking-tight">
         ⚡ THAY ĐỔI CHƯA COMMIT
       </h1>
+      <div class="flex items-center gap-2">
+      <button
+        class="btn btn-primary"
+        @click="handleRebase"
+        :disabled="isLoading || isRebasing">
+        {{ isRebasing ? "ĐANG REBASE..." : "⬇ REBASE CODE" }}
+      </button>
       <button
         class="btn btn-secondary"
         @click="refreshStatus"
-        :disabled="isLoading">
+        :disabled="isLoading || isRebasing">
         ↻ LÀM MỚI
       </button>
+      </div>
     </div>
 
     <!-- Empty State -->
@@ -118,6 +126,7 @@ import { useRepositoryStore } from "@/stores/repository";
 
 const repositoryStore = useRepositoryStore();
 const isLoading = ref(false);
+const isRebasing = ref(false);
 
 const stagedChanges = computed(() => {
   return repositoryStore.gitStatus.filter((f) => f.staged);
@@ -131,6 +140,26 @@ async function refreshStatus() {
   isLoading.value = true;
   await repositoryStore.loadGitStatus();
   isLoading.value = false;
+}
+
+async function handleRebase() {
+  if (!repositoryStore.currentRepository) return;
+  if (!confirm("Bạn có chắc chắn muốn rebase code mới nhất từ origin? Các thay đổi hiện tại sẽ được stash và pop lại sau khi rebase.")) {
+    return;
+  }
+
+  isRebasing.value = true;
+  try {
+    const result = await window.electronAPI.rebase(repositoryStore.currentRepository);
+    alert(result.message);
+    // Refresh status to show any changes or conflicts
+    await refreshStatus();
+  } catch (e) {
+    console.error(e);
+    alert("Có lỗi xảy ra khi rebase.");
+  } finally {
+    isRebasing.value = false;
+  }
 }
 
 onMounted(() => {

@@ -816,6 +816,82 @@ export function registerGitHandlers() {
     }
   );
 
+  // Rebase code from origin (Pull --rebase)
+  ipcMain.handle(
+    "git:rebase",
+    async (
+      _,
+      repoPath: string
+    ): Promise<{
+      success: boolean;
+      message: string;
+      stashed: boolean;
+      conflict?: boolean;
+    }> => {
+      let stashed = false;
+      try {
+        // 1. Check for uncommitted changes
+        const statusOutput = await runGitCommand(repoPath, "status --porcelain");
+        const isDirty = statusOutput.trim().length > 0;
+
+        // 2. Auto-stash if dirty
+        if (isDirty) {
+          // -u to include untracked files
+          await runGitCommand(
+            repoPath,
+            'stash push -u -m "Auto stash by RepoInsight"'
+          );
+          stashed = true;
+        }
+
+        // 3. Get current branch
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+
+        // 4. Rebase from origin
+        // Fetch first to be sure? pull --rebase does fetch.
+        await runGitCommand(
+          repoPath,
+          `pull --rebase origin ${currentBranch.trim()}`
+        );
+
+        // 5. Pop stash if we stashed
+        if (stashed) {
+          try {
+            await runGitCommand(repoPath, "stash pop");
+          } catch (e) {
+            // Stash pop conflict
+            console.warn("Stash pop conflict:", e);
+            return {
+              success: true,
+              message:
+                "Đã rebase thành công, nhưng có xung đột khi khôi phục stash. Vui lòng kiểm tra và giải quyết xung đột.",
+              stashed: true,
+              conflict: true,
+            };
+          }
+        }
+
+        return {
+          success: true,
+          message: stashed
+            ? "Đã rebase và khôi phục thay đổi thành công!"
+            : "Đã rebase thành công!",
+          stashed,
+        };
+      } catch (error: any) {
+        console.error("Rebase failed:", error);
+        return {
+          success: false,
+          message: error.message || "Rebase thất bại. Vui lòng kiểm tra log.",
+          stashed,
+        };
+      }
+    }
+  );
+
   // Switch to a different branch
   ipcMain.handle(
     "git:checkoutBranch",
