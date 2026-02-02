@@ -37,7 +37,7 @@
               <template
                 v-for="(lane, laneIndex) in getLanes(startIndex + i)"
                 :key="laneIndex">
-                <!-- Vertical line through (From 0 to 48) -->
+                <!-- Vertical line through -->
                 <path
                   v-if="lane.through"
                   :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(lane.column)} ${rowHeight}`"
@@ -45,8 +45,7 @@
                   stroke-width="2"
                   fill="none" />
 
-                <!-- Line from above (From 0 to 24) -->
-                <!-- Always vertical as per logic -->
+                <!-- Line from above (vertical) -->
                 <path
                   v-if="lane.fromAbove && lane.toColumn !== undefined"
                   :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(lane.toColumn)} ${rowHeight / 2}`"
@@ -54,50 +53,69 @@
                   stroke-width="2"
                   fill="none" />
 
-                <!-- Line to below (From 24 to 48) -->
-                <!-- Can be vertical or curved (merge/branch) -->
+                <!-- Line to below (vertical or curved) -->
                 <path
                   v-if="lane.toBelow && lane.toColumn !== undefined"
-                  :d="drawCurve(getLaneX(lane.column), rowHeight / 2, getLaneX(lane.toColumn), rowHeight)"
+                  :d="drawCurve(getLaneX(lane.column), rowHeight / 2, getLaneX(lane.toColumn), rowHeight, lane.color !== getCommitColor(startIndex + i))"
                   :stroke="lane.color"
                   stroke-width="2"
                   fill="none" />
               </template>
+
               <!-- Commit node -->
+              <!-- Merge Commit (Hollow Ring) -->
+              <g v-if="commit.parentHashes.length > 1">
+                 <circle
+                  :cx="getLaneX(getCommitColumn(startIndex + i))"
+                  :cy="rowHeight / 2"
+                  r="6"
+                  :stroke="getCommitColor(startIndex + i)"
+                  fill="var(--neo-cream)"
+                  stroke-width="3" />
+                 <circle
+                  :cx="getLaneX(getCommitColumn(startIndex + i))"
+                  :cy="rowHeight / 2"
+                  r="3"
+                  :fill="getCommitColor(startIndex + i)" />
+              </g>
+
+              <!-- Regular Commit (Solid Dot) -->
               <circle
+                v-else
                 :cx="getLaneX(getCommitColumn(startIndex + i))"
                 :cy="rowHeight / 2"
-                r="6"
+                r="5"
                 :fill="getCommitColor(startIndex + i)"
                 stroke="var(--neo-black)"
-                stroke-width="2" />
+                stroke-width="1" />
             </svg>
           </div>
 
           <!-- Commit info -->
           <div class="commit-content">
-            <!-- Branch refs -->
-            <div class="refs-container" v-if="commit.refs.length > 0">
-              <span
-                v-for="ref in commit.refs.slice(0, 3)"
-                :key="ref"
-                class="ref-badge"
-                :class="getRefClass(ref)">
-                {{ formatRef(ref) }}
-              </span>
-              <span v-if="commit.refs.length > 3" class="ref-more">
-                +{{ commit.refs.length - 3 }}
-              </span>
-            </div>
+            <!-- Details: Message first, then refs/meta -->
+            <div class="flex items-center gap-2 min-w-0">
+               <span class="commit-message truncate" :title="commit.message">{{ commit.message }}</span>
 
-            <div class="commit-main">
-              <span class="commit-message truncate">{{ commit.message }}</span>
+                <!-- Branch refs (floated right or inline) -->
+                <div class="refs-container inline-flex ml-2" v-if="commit.refs.length > 0">
+                  <span
+                    v-for="ref in commit.refs.slice(0, 3)"
+                    :key="ref"
+                    class="ref-badge"
+                    :class="getRefClass(ref)">
+                    {{ formatRef(ref) }}
+                  </span>
+                  <span v-if="commit.refs.length > 3" class="ref-more">
+                    +{{ commit.refs.length - 3 }}
+                  </span>
+                </div>
             </div>
 
             <div class="commit-meta">
-              <code class="commit-hash">{{ commit.shortHash }}</code>
-              <span class="commit-author">{{ commit.author }}</span>
-              <span class="commit-date">{{ formatDate(commit.date) }}</span>
+              <span class="commit-hash font-mono text-[10px] opacity-70">{{ commit.shortHash }}</span>
+              <span class="font-bold text-[11px]">{{ commit.author }}</span>
+              <span class="text-[10px] text-stone-500">{{ formatDate(commit.date) }}</span>
             </div>
           </div>
         </div>
@@ -177,11 +195,11 @@ const loading = ref(false);
 const selectedCommit = ref<GitGraphCommit | null>(null);
 
 // Virtual scrolling
-const rowHeight = 48; // Must match CSS
+const rowHeight = 36; // More compact row height
 const scrollContainer = ref<HTMLElement | null>(null);
 const scrollTop = ref(0);
 const containerHeight = ref(800); // Initial estimate
-const buffer = 10; // Extra items to render
+const buffer = 15; // Increased buffer
 
 const totalHeight = computed(() => commits.value.length * rowHeight);
 
@@ -219,19 +237,19 @@ function updateDimensions() {
 const commitColumns = ref<Map<string, number>>(new Map());
 const maxColumn = ref(0);
 
-// Colors for different branches
+// Colors for different branches (Vibrant Palette)
 const branchColors = [
-  "var(--neo-blue)",
-  "var(--neo-green)",
-  "var(--neo-orange)",
-  "var(--neo-pink)",
-  "var(--neo-purple)",
-  "#00D4FF",
-  "#7CFF6B",
-  "#FF9E2C",
+  "#ff9e2c", // Orange (Main)
+  "#00D4FF", // Blue
+  "#be1bf3", // Purple
+  "#7CFF6B", // Green
+  "#ff6b9d", // Pink
+  "#f3f31b", // Yellow
+  "#3992ff", // Darker Blue
+  "#ff4d4d", // Red
 ];
 
-const laneWidth = computed(() => Math.max(60, (maxColumn.value + 1) * 20 + 20));
+const laneWidth = computed(() => Math.max(60, (maxColumn.value + 1) * 16 + 24));
 
 async function loadGitGraph() {
   if (!repositoryStore.currentRepository) return;
@@ -327,7 +345,7 @@ function getCommitColumn(index: number): number {
 }
 
 function getLaneX(column: number): number {
-  return column * 20 + 15;
+  return column * 16 + 12; // Tighter spacing
 }
 
 function getCommitColor(index: number): string {
@@ -344,15 +362,13 @@ interface Lane {
   toColumn?: number;
 }
 
-// Side storage for row lanes to avoid re-calc
+// Side storage for row lanes
 const rowLanes = ref<Lane[][]>([]);
 
 function precalculateRowLanes() {
   rowLanes.value = new Array(commits.value.length);
-
-  // Simulate the activeLanes state for each row to determine drawing instructions
-  const currentActiveLanes: (string | null)[] = []; // Stores parent hash or null for empty
-  const currentLaneColors: (string | null)[] = []; // Stores color for each lane
+  const currentActiveLanes: (string | null)[] = [];
+  const currentLaneColors: (string | null)[] = [];
 
   for (let i = 0; i < commits.value.length; i++) {
     const commit = commits.value[i];
@@ -360,14 +376,13 @@ function precalculateRowLanes() {
     const commitColor = branchColors[commitColumn % branchColors.length];
     const lanesForThisRow: Lane[] = [];
 
-    // 1. Determine incoming lanes (before this commit is processed)
+    // 1. Snapshot incoming State
     const incomingActiveLanes = [...currentActiveLanes];
 
-    // 2. Draw 'through' lines for lanes that are active and not the current commit's lane
+    // 2. Through Lines
     for (let col = 0; col < incomingActiveLanes.length; col++) {
-      if (col === commitColumn) continue; // This lane is for the current commit
+      if (col === commitColumn) continue;
       if (incomingActiveLanes[col] !== null) {
-        // If this lane is active and not for the current commit, it passes through
         lanesForThisRow.push({
           column: col,
           color: currentLaneColors[col] || branchColors[col % branchColors.length],
@@ -376,8 +391,8 @@ function precalculateRowLanes() {
       }
     }
 
-    // 3. Draw lines related to the current commit
-    // Line from above (if this commit is a child of a previous commit in this lane)
+    // 3. Current Commit Connections
+    // From Above
     if (incomingActiveLanes[commitColumn] === commit.hash) {
       lanesForThisRow.push({
         column: commitColumn,
@@ -387,32 +402,31 @@ function precalculateRowLanes() {
       });
     }
 
-    // Line to below (to its first parent)
+    // To Below (First Parent)
     if (commit.parentHashes.length > 0) {
       lanesForThisRow.push({
-        column: commitColumn, // Start from current commit's column
+        column: commitColumn,
         color: commitColor,
         toBelow: true,
-        toColumn: commitColumn, // Assumes first parent continues in same column initially
+        toColumn: commitColumn,
       });
     }
 
-    // Merge lines (from this commit to other parents)
+    // Merge Lines (To Other Parents)
     for (let p = 1; p < commit.parentHashes.length; p++) {
       const parentHash = commit.parentHashes[p];
       const parentColumn = commitColumns.value.get(parentHash);
       if (parentColumn !== undefined && parentColumn !== commitColumn) {
         lanesForThisRow.push({
-          column: commitColumn, // Start from current commit's column
-          color: branchColors[parentColumn % branchColors.length], // Color of the target branch
+          column: commitColumn,
+          color: branchColors[parentColumn % branchColors.length], // Color of the connecting branch
           toBelow: true,
-          toColumn: parentColumn, // End at the parent's column
+          toColumn: parentColumn,
         });
       }
     }
 
-    // 4. Update currentActiveLanes for the next iteration (as if calculateBranchLanes was run)
-    // Find where this commit was supposed to go
+    // 4. Update State for Next Row
     let currentCommitLaneIndex = currentActiveLanes.indexOf(commit.hash);
     if (currentCommitLaneIndex === -1) {
       currentCommitLaneIndex = currentActiveLanes.indexOf(null);
@@ -423,16 +437,14 @@ function precalculateRowLanes() {
       }
     }
 
-    // Assign this commit's parent to its lane
     if (commit.parentHashes.length > 0) {
       currentActiveLanes[currentCommitLaneIndex] = commit.parentHashes[0];
       currentLaneColors[currentCommitLaneIndex] = commitColor;
     } else {
-      currentActiveLanes[currentCommitLaneIndex] = null; // Lane ends
+      currentActiveLanes[currentCommitLaneIndex] = null;
       currentLaneColors[currentCommitLaneIndex] = null;
     }
 
-    // Handle additional parents (merges)
     for (let p = 1; p < commit.parentHashes.length; p++) {
       const parentHash = commit.parentHashes[p];
       if (!currentActiveLanes.includes(parentHash)) {
@@ -447,7 +459,6 @@ function precalculateRowLanes() {
       }
     }
 
-    // Clean up empty lanes from the end
     while (currentActiveLanes.length > 0 && currentActiveLanes[currentActiveLanes.length - 1] === null) {
       currentActiveLanes.pop();
       currentLaneColors.pop();
@@ -461,19 +472,14 @@ function getLanes(index: number): Lane[] {
   return rowLanes.value[index] || [];
 }
 
-function drawCurve(x1: number, y1: number, x2: number, y2: number): string {
+function drawCurve(x1: number, y1: number, x2: number, y2: number, isMerge: boolean): string {
   if (x1 === x2) {
     return `M ${x1} ${y1} L ${x2} ${y2}`;
   }
 
-  // Bezier curve logic
-  // Vertical start from y1, Vertical end at y2
-  // Control points:
-  // cp1: (x1, y1 + smoothing)
-  // cp2: (x2, y2 - smoothing)
-
+  // Smoother S-Curve for Merges
   const height = y2 - y1;
-  const smoothing = height / 2;
+  const smoothing = height * 0.5; // Controls the curvature
 
   return `M ${x1} ${y1} C ${x1} ${y1 + smoothing}, ${x2} ${y2 - smoothing}, ${x2} ${y2}`;
 }
@@ -495,26 +501,17 @@ function formatRef(ref: string): string {
 
 function formatDate(date: Date | string): string {
   const d = new Date(date);
-  const now = new Date();
+  const now = new Date(); // Use actual now
   const diffMs = now.getTime() - d.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) return "hôm nay";
   if (diffDays === 1) return "hôm qua";
-  if (diffDays < 7) return `${diffDays} ngày trước`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`;
-  return d.toLocaleDateString();
+  return `${diffDays} ngày trước`;
 }
 
 function formatFullDate(date: Date | string): string {
-  return new Date(date).toLocaleString("vi-VN", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(date).toLocaleString("vi-VN");
 }
 
 watch(
@@ -527,11 +524,11 @@ watch(
 );
 
 onMounted(() => {
-  window.addEventListener('resize', updateDimensions);
   updateDimensions();
   if (repositoryStore.currentRepository) {
     loadGitGraph();
   }
+  window.addEventListener('resize', updateDimensions);
 });
 
 onUnmounted(() => {
@@ -567,7 +564,7 @@ onUnmounted(() => {
   background: var(--neo-white);
   border: 4px solid var(--neo-black);
   box-shadow: 6px 6px 0 var(--neo-black);
-  position: relative; /* For virtual scroll positioning */
+  position: relative;
 }
 
 .graph-list {
@@ -578,25 +575,25 @@ onUnmounted(() => {
 .graph-row {
   display: flex;
   align-items: stretch;
-  border-bottom: 2px solid var(--neo-black);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  height: 48px; /* Fixed height for virtualization */
+  height: 36px;
   box-sizing: border-box;
+  width: 100%;
 }
 
 .graph-row:hover {
-  background: var(--neo-yellow);
+  background: rgba(0,0,0,0.02);
 }
 
 .graph-row.selected {
-  background: var(--neo-pink);
+  background: rgba(var(--neo-yellow-rgb), 0.2);
 }
 
 .lane-container {
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.03);
-  border-right: 2px solid var(--neo-black);
+  border-right: 1px solid rgba(0,0,0,0.1);
+  background: transparent;
 }
 
 .lane-svg {
@@ -605,39 +602,41 @@ onUnmounted(() => {
 
 .commit-content {
   flex: 1;
-  padding: 0 var(--spacing-md);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
   min-width: 0;
+  gap: 12px;
 }
 
 .refs-container {
   display: flex;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .ref-badge {
-  display: inline-block;
-  padding: 1px 6px;
-  font-size: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  height: 18px;
+  font-size: 10px;
   font-weight: 700;
-  border: 2px solid var(--neo-black);
+  border-radius: 9px;
+  color: white;
   white-space: nowrap;
 }
 
 .ref-local {
-  background: var(--neo-green);
+  background: #007bff;
 }
 
 .ref-remote {
-  background: var(--neo-blue);
+  background: #6c757d;
 }
 
 .ref-tag {
-  background: var(--neo-orange);
+  background: #28a745;
 }
 
 .ref-more {
@@ -653,16 +652,19 @@ onUnmounted(() => {
 }
 
 .commit-message {
-  font-size: 0.85rem;
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
 }
 
 .commit-meta {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .commit-hash {
