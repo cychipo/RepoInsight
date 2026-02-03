@@ -50,4 +50,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   removeCloneProgressListener: () => {
     ipcRenderer.removeAllListeners("clone-progress");
   },
+
+  // Settings
+  getGitConfig: (key: string, repoPath?: string) => ipcRenderer.invoke("settings:getGitConfig", key, repoPath),
+  setGitConfig: (key: string, value: string, repoPath?: string) =>
+    ipcRenderer.invoke("settings:setGitConfig", key, value, repoPath),
+  getApiKey: () => ipcRenderer.invoke("settings:getApiKey"),
+  setApiKey: (key: string) => ipcRenderer.invoke("settings:setApiKey", key),
 });

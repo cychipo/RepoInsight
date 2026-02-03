@@ -5,9 +5,9 @@ const fs = require("fs");
 const child_process = require("child_process");
 const util = require("util");
 const promises = require("fs/promises");
-const execAsync = util.promisify(child_process.exec);
+const execAsync$1 = util.promisify(child_process.exec);
 async function runGitCommand(repoPath, command) {
-  const { stdout } = await execAsync(`git ${command}`, {
+  const { stdout } = await execAsync$1(`git ${command}`, {
     cwd: repoPath,
     maxBuffer: 50 * 1024 * 1024
     // 50MB buffer for large repos
@@ -726,6 +726,61 @@ function extractFunctions(content) {
   }
   return functions;
 }
+const execAsync = util.promisify(child_process.exec);
+function registerSettingsHandlers() {
+  const userDataPath = electron.app.getPath("userData");
+  const configPath = path.join(userDataPath, "config.json");
+  electron.ipcMain.handle("settings:getGitConfig", async (_, key, repoPath) => {
+    try {
+      const cmd = repoPath ? `git config ${key}` : `git config --global ${key}`;
+      const cwd = repoPath ? repoPath : void 0;
+      const { stdout } = await execAsync(cmd, { cwd });
+      return stdout.trim();
+    } catch (e) {
+      return "";
+    }
+  });
+  electron.ipcMain.handle("settings:setGitConfig", async (_, key, value, repoPath) => {
+    try {
+      const cmd = repoPath ? `git config --local ${key} "${value}"` : `git config --global ${key} "${value}"`;
+      const cwd = repoPath ? repoPath : void 0;
+      await execAsync(cmd, { cwd });
+      return true;
+    } catch (e) {
+      console.error(`Failed to set git config ${key}:`, e);
+      throw e;
+    }
+  });
+  electron.ipcMain.handle("settings:getApiKey", async () => {
+    try {
+      if (!fs.existsSync(configPath)) return "";
+      const content = await promises.readFile(configPath, "utf-8");
+      const config = JSON.parse(content);
+      return config.geminiApiKey || "";
+    } catch (e) {
+      console.error("Failed to read config:", e);
+      return "";
+    }
+  });
+  electron.ipcMain.handle("settings:setApiKey", async (_, apiKey) => {
+    try {
+      let config = {};
+      if (fs.existsSync(configPath)) {
+        const content = await promises.readFile(configPath, "utf-8");
+        try {
+          config = JSON.parse(content);
+        } catch {
+        }
+      }
+      config.geminiApiKey = apiKey;
+      await promises.writeFile(configPath, JSON.stringify(config, null, 2));
+      return true;
+    } catch (e) {
+      console.error("Failed to save config:", e);
+      throw e;
+    }
+  });
+}
 let mainWindow = null;
 function createWindow() {
   const iconPath = process.env.VITE_DEV_SERVER_URL ? path.join(__dirname, "../../public/icon.png") : path.join(__dirname, "../dist/icon.png");
@@ -754,6 +809,7 @@ function createWindow() {
 }
 electron.app.whenReady().then(() => {
   registerGitHandlers();
+  registerSettingsHandlers();
   createWindow();
 });
 electron.app.on("window-all-closed", () => {
