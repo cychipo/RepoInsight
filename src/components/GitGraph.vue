@@ -26,7 +26,7 @@
             position: 'absolute',
             top: 0,
             left: 0,
-            right: 0
+            right: 0,
           }"
           :class="{ selected: selectedCommit?.hash === commit.hash }"
           @click="selectedCommit = commit">
@@ -40,7 +40,9 @@
                 <!-- Vertical line through -->
                 <path
                   v-if="lane.through"
-                  :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(lane.column)} ${rowHeight}`"
+                  :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(
+                    lane.column
+                  )} ${rowHeight}`"
                   :stroke="lane.color"
                   stroke-width="2"
                   fill="none" />
@@ -48,7 +50,9 @@
                 <!-- Line from above (vertical) -->
                 <path
                   v-if="lane.fromAbove && lane.toColumn !== undefined"
-                  :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(lane.toColumn)} ${rowHeight / 2}`"
+                  :d="`M ${getLaneX(lane.column)} 0 L ${getLaneX(
+                    lane.toColumn
+                  )} ${rowHeight / 2}`"
                   :stroke="lane.color"
                   stroke-width="2"
                   fill="none" />
@@ -56,7 +60,14 @@
                 <!-- Line to below (vertical or curved) -->
                 <path
                   v-if="lane.toBelow && lane.toColumn !== undefined"
-                  :d="drawCurve(getLaneX(lane.column), rowHeight / 2, getLaneX(lane.toColumn), rowHeight, lane.color !== getCommitColor(startIndex + i))"
+                  :d="
+                    drawCurve(
+                      getLaneX(lane.column),
+                      rowHeight / 2,
+                      getLaneX(lane.toColumn),
+                      rowHeight
+                    )
+                  "
                   :stroke="lane.color"
                   stroke-width="2"
                   fill="none" />
@@ -65,14 +76,14 @@
               <!-- Commit node -->
               <!-- Merge Commit (Hollow Ring) -->
               <g v-if="commit.parentHashes.length > 1">
-                 <circle
+                <circle
                   :cx="getLaneX(getCommitColumn(startIndex + i))"
                   :cy="rowHeight / 2"
                   r="6"
                   :stroke="getCommitColor(startIndex + i)"
                   fill="var(--neo-cream)"
                   stroke-width="3" />
-                 <circle
+                <circle
                   :cx="getLaneX(getCommitColumn(startIndex + i))"
                   :cy="rowHeight / 2"
                   r="3"
@@ -95,27 +106,35 @@
           <div class="commit-content">
             <!-- Details: Message first, then refs/meta -->
             <div class="flex items-center gap-2 min-w-0">
-               <span class="commit-message truncate" :title="commit.message">{{ commit.message }}</span>
+              <span class="commit-message truncate" :title="commit.message">{{
+                commit.message
+              }}</span>
 
-                <!-- Branch refs (floated right or inline) -->
-                <div class="refs-container inline-flex ml-2" v-if="commit.refs.length > 0">
-                  <span
-                    v-for="ref in commit.refs.slice(0, 3)"
-                    :key="ref"
-                    class="ref-badge"
-                    :class="getRefClass(ref)">
-                    {{ formatRef(ref) }}
-                  </span>
-                  <span v-if="commit.refs.length > 3" class="ref-more">
-                    +{{ commit.refs.length - 3 }}
-                  </span>
-                </div>
+              <!-- Branch refs (floated right or inline) -->
+              <div
+                class="refs-container inline-flex ml-2"
+                v-if="commit.refs.length > 0">
+                <span
+                  v-for="ref in commit.refs.slice(0, 3)"
+                  :key="ref"
+                  class="ref-badge"
+                  :class="getRefClass(ref)">
+                  {{ formatRef(ref) }}
+                </span>
+                <span v-if="commit.refs.length > 3" class="ref-more">
+                  +{{ commit.refs.length - 3 }}
+                </span>
+              </div>
             </div>
 
             <div class="commit-meta">
-              <span class="commit-hash font-mono text-[10px] opacity-70">{{ commit.shortHash }}</span>
+              <span class="commit-hash font-mono text-[10px] opacity-70">{{
+                commit.shortHash
+              }}</span>
               <span class="font-bold text-[11px]">{{ commit.author }}</span>
-              <span class="text-[10px] text-stone-500">{{ formatDate(commit.date) }}</span>
+              <span class="text-[10px] text-stone-500">{{
+                formatDate(commit.date)
+              }}</span>
             </div>
           </div>
         </div>
@@ -267,12 +286,14 @@ async function loadGitGraph() {
     );
 
     // Only update if changed
-    if (newCommits.length !== commits.value.length || newCommits[0]?.hash !== commits.value[0]?.hash) {
-       commits.value = newCommits;
-       calculateBranchLanes(); // This now also calls precalculateRowLanes
-       nextTick(() => updateDimensions());
+    if (
+      newCommits.length !== commits.value.length ||
+      newCommits[0]?.hash !== commits.value[0]?.hash
+    ) {
+      commits.value = newCommits;
+      calculateBranchLanes(); // This now also calls precalculateRowLanes
+      nextTick(() => updateDimensions());
     }
-
   } catch (e) {
     console.error("Failed to load git graph:", e);
   } finally {
@@ -385,7 +406,8 @@ function precalculateRowLanes() {
       if (incomingActiveLanes[col] !== null) {
         lanesForThisRow.push({
           column: col,
-          color: currentLaneColors[col] || branchColors[col % branchColors.length],
+          color:
+            currentLaneColors[col] || branchColors[col % branchColors.length],
           through: true,
         });
       }
@@ -455,11 +477,15 @@ function precalculateRowLanes() {
           currentLaneColors.push(null);
         }
         currentActiveLanes[newLaneIndex] = parentHash;
-        currentLaneColors[newLaneIndex] = branchColors[newLaneIndex % branchColors.length];
+        currentLaneColors[newLaneIndex] =
+          branchColors[newLaneIndex % branchColors.length];
       }
     }
 
-    while (currentActiveLanes.length > 0 && currentActiveLanes[currentActiveLanes.length - 1] === null) {
+    while (
+      currentActiveLanes.length > 0 &&
+      currentActiveLanes[currentActiveLanes.length - 1] === null
+    ) {
       currentActiveLanes.pop();
       currentLaneColors.pop();
     }
@@ -472,7 +498,7 @@ function getLanes(index: number): Lane[] {
   return rowLanes.value[index] || [];
 }
 
-function drawCurve(x1: number, y1: number, x2: number, y2: number, isMerge: boolean): string {
+function drawCurve(x1: number, y1: number, x2: number, y2: number): string {
   if (x1 === x2) {
     return `M ${x1} ${y1} L ${x2} ${y2}`;
   }
@@ -481,7 +507,9 @@ function drawCurve(x1: number, y1: number, x2: number, y2: number, isMerge: bool
   const height = y2 - y1;
   const smoothing = height * 0.5; // Controls the curvature
 
-  return `M ${x1} ${y1} C ${x1} ${y1 + smoothing}, ${x2} ${y2 - smoothing}, ${x2} ${y2}`;
+  return `M ${x1} ${y1} C ${x1} ${y1 + smoothing}, ${x2} ${
+    y2 - smoothing
+  }, ${x2} ${y2}`;
 }
 
 function getRefClass(ref: string): string {
@@ -528,11 +556,11 @@ onMounted(() => {
   if (repositoryStore.currentRepository) {
     loadGitGraph();
   }
-  window.addEventListener('resize', updateDimensions);
+  window.addEventListener("resize", updateDimensions);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateDimensions);
+  window.removeEventListener("resize", updateDimensions);
 });
 </script>
 
@@ -575,7 +603,7 @@ onUnmounted(() => {
 .graph-row {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   height: 36px;
   box-sizing: border-box;
@@ -583,7 +611,7 @@ onUnmounted(() => {
 }
 
 .graph-row:hover {
-  background: rgba(0,0,0,0.02);
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .graph-row.selected {
@@ -592,7 +620,7 @@ onUnmounted(() => {
 
 .lane-container {
   flex-shrink: 0;
-  border-right: 1px solid rgba(0,0,0,0.1);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
   background: transparent;
 }
 
