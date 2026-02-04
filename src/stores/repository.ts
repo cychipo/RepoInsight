@@ -11,9 +11,16 @@ import { useGraphStore } from "./graph";
 
 const COMMITS_PER_PAGE = 10;
 
+interface RecentRepository {
+  path: string;
+  name: string;
+  lastOpened: number;
+}
+
 export const useRepositoryStore = defineStore("repository", () => {
   // State
   const currentRepository = ref<string | null>(null);
+  const recentRepositories = ref<RecentRepository[]>([]);
   const repositoryInfo = ref<RepositoryInfo | null>(null);
   const commits = ref<Commit[]>([]);
   const branches = ref<Branch[]>([]);
@@ -46,6 +53,64 @@ export const useRepositoryStore = defineStore("repository", () => {
 
   const hasRepository = computed(() => !!currentRepository.value);
 
+  // Load recent repositories from localStorage on init
+  function loadRecentRepositories() {
+    const stored = localStorage.getItem("recentRepositories");
+    if (stored) {
+      try {
+        recentRepositories.value = JSON.parse(stored);
+      } catch (e) {
+        console.error("Failed to parse recent repositories:", e);
+        recentRepositories.value = [];
+      }
+    }
+  }
+
+  function saveRecentRepositories() {
+    localStorage.setItem(
+      "recentRepositories",
+      JSON.stringify(recentRepositories.value)
+    );
+  }
+
+  function addToHistory(path: string) {
+    const parts = path.split(/[/\\]/);
+    const name = parts[parts.length - 1];
+
+    // Remove if exists
+    const existingIndex = recentRepositories.value.findIndex(
+      (r) => r.path === path
+    );
+    if (existingIndex > -1) {
+      recentRepositories.value.splice(existingIndex, 1);
+    }
+
+    // Add to top
+    recentRepositories.value.unshift({
+      path,
+      name,
+      lastOpened: Date.now(),
+    });
+
+    // Limit to 10
+    if (recentRepositories.value.length > 10) {
+      recentRepositories.value = recentRepositories.value.slice(0, 10);
+    }
+
+    saveRecentRepositories();
+  }
+
+  function removeRecentRepository(path: string) {
+    const index = recentRepositories.value.findIndex((r) => r.path === path);
+    if (index > -1) {
+      recentRepositories.value.splice(index, 1);
+      saveRecentRepositories();
+    }
+  }
+
+  // Initialize
+  loadRecentRepositories();
+
   // Actions
   async function selectRepository(): Promise<boolean> {
     try {
@@ -61,7 +126,10 @@ export const useRepositoryStore = defineStore("repository", () => {
         return false;
       }
 
-      currentRepository.value = result.path;
+      if (result.path) {
+        currentRepository.value = result.path;
+        addToHistory(result.path);
+      }
       await loadRepositoryData();
       return true;
     } catch (e) {
@@ -111,7 +179,8 @@ export const useRepositoryStore = defineStore("repository", () => {
   }
 
   async function runAnalysis(): Promise<void> {
-    if (!currentRepository.value) return;
+    const repoPath = currentRepository.value;
+    if (!repoPath) return;
 
     const graphStore = useGraphStore();
 
@@ -124,9 +193,7 @@ export const useRepositoryStore = defineStore("repository", () => {
         };
       });
 
-      const result = await window.electronAPI.analyzeRepository(
-        currentRepository.value
-      );
+      const result = await window.electronAPI.analyzeRepository(repoPath);
 
       if (result.success) {
         graphStore.setGraph(result.graph);
@@ -161,6 +228,7 @@ export const useRepositoryStore = defineStore("repository", () => {
       isLoading.value = true;
       error.value = null;
       currentRepository.value = path;
+      addToHistory(path);
       await loadRepositoryData();
       return true;
     } catch (e) {
@@ -257,6 +325,7 @@ export const useRepositoryStore = defineStore("repository", () => {
     currentRepository,
     repositoryInfo,
     commits,
+    recentRepositories,
     branches,
     selectedBranch,
     gitStatus,
@@ -283,5 +352,6 @@ export const useRepositoryStore = defineStore("repository", () => {
     getFileChanges,
     setAnalysisProgress,
     clearRepository,
+    removeRecentRepository,
   };
 });

@@ -1,4 +1,26 @@
 "use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 const electron = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -545,6 +567,14 @@ function registerGitHandlers() {
           const stagedStatus = line[0];
           const unstagedStatus = line[1];
           const filePath = line.substring(3).trim();
+          if (stagedStatus === "?" && unstagedStatus === "?") {
+            changes.push({
+              path: filePath,
+              status: "untracked",
+              staged: false
+            });
+            continue;
+          }
           if (stagedStatus !== " " && stagedStatus !== "?") {
             changes.push({
               path: filePath,
@@ -552,7 +582,7 @@ function registerGitHandlers() {
               staged: true
             });
           }
-          if (unstagedStatus !== " ") {
+          if (unstagedStatus !== " " && unstagedStatus !== "?") {
             changes.push({
               path: filePath,
               status: getStatusLabel(unstagedStatus),
@@ -572,7 +602,10 @@ function registerGitHandlers() {
     async (_, repoPath) => {
       let stashed = false;
       try {
-        const statusOutput = await runGitCommand(repoPath, "status --porcelain");
+        const statusOutput = await runGitCommand(
+          repoPath,
+          "status --porcelain"
+        );
         const isDirty = statusOutput.trim().length > 0;
         if (isDirty) {
           await runGitCommand(
@@ -585,10 +618,31 @@ function registerGitHandlers() {
           repoPath,
           "rev-parse --abbrev-ref HEAD"
         );
-        await runGitCommand(
-          repoPath,
-          `pull --rebase origin ${currentBranch.trim()}`
-        );
+        await new Promise((resolve, reject) => {
+          const args = ["pull", "--rebase", "origin", currentBranch.trim()];
+          const gitProcess = child_process.spawn("git", args, {
+            cwd: repoPath,
+            stdio: ["ignore", "pipe", "pipe"]
+          });
+          let stderr = "";
+          gitProcess.stderr.on("data", (data) => {
+            stderr += data.toString();
+          });
+          gitProcess.on("close", (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(
+                new Error(
+                  stderr || `git pull --rebase failed with code ${code}`
+                )
+              );
+            }
+          });
+          gitProcess.on("error", (err) => {
+            reject(err);
+          });
+        });
         if (stashed) {
           try {
             await runGitCommand(repoPath, "stash pop");
@@ -609,6 +663,13 @@ function registerGitHandlers() {
         };
       } catch (error) {
         console.error("Rebase failed:", error);
+        if (stashed) {
+          try {
+            await runGitCommand(repoPath, "stash pop");
+          } catch (popError) {
+            console.error("Failed to pop stash after rebase error:", popError);
+          }
+        }
         return {
           success: false,
           message: error.message || "Rebase thất bại. Vui lòng kiểm tra log.",
@@ -628,6 +689,167 @@ function registerGitHandlers() {
           success: false,
           error: error instanceof Error ? error.message : "Failed to switch branch"
         };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:stageFile",
+    async (_, repoPath, filePath) => {
+      try {
+        await runGitCommand(repoPath, `add "${filePath}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Stage failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:unstageFile",
+    async (_, repoPath, filePath) => {
+      try {
+        await runGitCommand(repoPath, `reset HEAD "${filePath}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unstage failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:stageAll",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "add -A");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Stage all failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:unstageAll",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "reset HEAD");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unstage all failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:discardFile",
+    async (_, repoPath, filePath) => {
+      try {
+        const statusOutput = await runGitCommand(
+          repoPath,
+          `status --porcelain "${filePath}"`
+        );
+        if (statusOutput.startsWith("??")) {
+          const fullPath = path.join(repoPath, filePath);
+          const fs2 = await import("fs/promises");
+          await fs2.unlink(fullPath);
+        } else {
+          await runGitCommand(repoPath, `checkout -- "${filePath}"`);
+        }
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Discard failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:discardAll",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "checkout -- .");
+        await runGitCommand(repoPath, "clean -fd");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Discard all failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:commit",
+    async (_, repoPath, message) => {
+      try {
+        const escapedMessage = message.replace(/"/g, '\\"');
+        await runGitCommand(repoPath, `commit -m "${escapedMessage}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Commit failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:push",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "push");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Push failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getStagedDiff",
+    async (_, repoPath) => {
+      try {
+        return await runGitCommand(repoPath, "diff --cached");
+      } catch (error) {
+        console.error("Failed to get staged diff:", error);
+        return "";
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getUnstagedDiff",
+    async (_, repoPath) => {
+      try {
+        return await runGitCommand(repoPath, "diff");
+      } catch (error) {
+        console.error("Failed to get unstaged diff:", error);
+        return "";
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getFileDiff",
+    async (_, repoPath, filePath, staged) => {
+      try {
+        const stagedFlag = staged ? "--cached" : "";
+        return await runGitCommand(
+          repoPath,
+          `diff ${stagedFlag} -- "${filePath}"`
+        );
+      } catch (error) {
+        console.error("Failed to get file diff:", error);
+        return "";
       }
     }
   );
@@ -799,6 +1021,7 @@ function createWindow() {
   });
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }

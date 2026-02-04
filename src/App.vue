@@ -28,7 +28,7 @@
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': false }">
-          <span class="text-lg">◆</span>
+          <Home :size="18" />
           <span>TRANG CHỦ</span>
         </router-link>
 
@@ -37,7 +37,7 @@
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
-          <span class="text-lg">◈</span>
+          <GitBranch :size="18" />
           <span>BIỂU ĐỒ</span>
         </router-link>
 
@@ -46,7 +46,7 @@
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
-          <span class="text-lg">▤</span>
+          <BarChart3 :size="18" />
           <span>PHÂN TÍCH</span>
         </router-link>
 
@@ -55,7 +55,7 @@
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
-          <span class="text-lg">◷</span>
+          <Clock :size="18" />
           <span>DÒNG THỜI GIAN</span>
         </router-link>
 
@@ -64,7 +64,7 @@
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
-          <span class="text-lg">⚙</span>
+          <Settings :size="18" />
           <span>CÀI ĐẶT</span>
         </router-link>
 
@@ -73,7 +73,7 @@
           class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-neo-black no-underline border-3 border-transparent transition-all hover:bg-neo-yellow hover:border-neo-black hover:shadow-brutal hover:-translate-x-[2px] hover:-translate-y-[2px]"
           active-class="bg-neo-pink !border-neo-black shadow-brutal"
           :class="{ 'opacity-40 pointer-events-none': !hasRepository }">
-          <span class="text-lg">⚡</span>
+          <Zap :size="18" class="text-neo-black" />
           <span>THAY ĐỔI</span>
         </router-link>
       </nav>
@@ -91,7 +91,7 @@
             {{ repositoryStore.repositoryName }}
           </div>
           <div class="flex items-center gap-1 text-xs font-semibold">
-            <span class="text-base">⎇</span>
+            <GitBranch :size="14" />
             <span class="truncate">{{
               repositoryStore.selectedBranch || repositoryStore.currentBranch
             }}</span>
@@ -114,6 +114,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRepositoryStore } from "@/stores/repository";
+import {
+  Home,
+  GitBranch,
+  BarChart3,
+  Clock,
+  Settings,
+  Zap,
+} from "lucide-vue-next";
 
 const repositoryStore = useRepositoryStore();
 

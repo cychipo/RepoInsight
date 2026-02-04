@@ -38,6 +38,37 @@ export interface ElectronAPI {
   rebase: (
     repoPath: string
   ) => Promise<{ success: boolean; message?: string; error?: string }>;
+  stageFile: (
+    repoPath: string,
+    filePath: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  unstageFile: (
+    repoPath: string,
+    filePath: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  stageAll: (repoPath: string) => Promise<{ success: boolean; error?: string }>;
+  unstageAll: (
+    repoPath: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  discardFile: (
+    repoPath: string,
+    filePath: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  discardAll: (
+    repoPath: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  commit: (
+    repoPath: string,
+    message: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  push: (repoPath: string) => Promise<{ success: boolean; error?: string }>;
+  getStagedDiff: (repoPath: string) => Promise<string>;
+  getUnstagedDiff: (repoPath: string) => Promise<string>;
+  getFileDiff: (
+    repoPath: string,
+    filePath: string,
+    staged: boolean
+  ) => Promise<string>;
 
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
