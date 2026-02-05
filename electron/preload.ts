@@ -51,6 +51,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("git:getUnstagedDiff", repoPath),
   getFileDiff: (repoPath: string, filePath: string, staged: boolean) =>
     ipcRenderer.invoke("git:getFileDiff", repoPath, filePath, staged),
+  getAheadBehind: (repoPath: string) =>
+    ipcRenderer.invoke("git:getAheadBehind", repoPath),
 
   // Analysis operations
   analyzeRepository: (repoPath: string) =>

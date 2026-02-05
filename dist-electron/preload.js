@@ -26,6 +26,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   getStagedDiff: (repoPath) => electron.ipcRenderer.invoke("git:getStagedDiff", repoPath),
   getUnstagedDiff: (repoPath) => electron.ipcRenderer.invoke("git:getUnstagedDiff", repoPath),
   getFileDiff: (repoPath, filePath, staged) => electron.ipcRenderer.invoke("git:getFileDiff", repoPath, filePath, staged),
+  getAheadBehind: (repoPath) => electron.ipcRenderer.invoke("git:getAheadBehind", repoPath),
   // Analysis operations
   analyzeRepository: (repoPath) => electron.ipcRenderer.invoke("analysis:analyzeRepository", repoPath),
   getAnalysisProgress: () => electron.ipcRenderer.invoke("analysis:getProgress"),

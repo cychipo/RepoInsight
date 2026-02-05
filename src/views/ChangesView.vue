@@ -46,13 +46,20 @@
       <p class="font-medium text-stone-600">
         Thư mục làm việc sạch sẽ. Tất cả thay đổi đã được commit.
       </p>
+      <p v-if="commitsAhead > 0" class="text-sm font-semibold text-neo-purple">
+        Có {{ commitsAhead }} commit chưa được push lên remote.
+      </p>
       <button
+        v-if="commitsAhead > 0"
         class="btn btn-primary bg-neo-purple"
         @click="handlePush"
         :disabled="isPushing">
         <Cloud v-if="!isPushing" :size="14" class="inline" />
         {{ isPushing ? "ĐANG PUSH..." : "PUSH LÊN REMOTE" }}
       </button>
+      <p v-else class="text-sm text-stone-500">
+        Tất cả đã được đồng bộ với remote.
+      </p>
     </div>
 
     <!-- Smart Commit Section -->
@@ -392,6 +399,7 @@ const isCommitting = ref(false);
 const isGenerating = ref(false);
 const isPushing = ref(false);
 const commitMessage = ref("");
+const commitsAhead = ref(0);
 
 const stagedChanges = computed(() => {
   return repositoryStore.gitStatus.filter((f) => f.staged);
@@ -418,9 +426,23 @@ const canPush = computed(
   () => unstagedChanges.value.length === 0 && stagedChanges.value.length === 0
 );
 
+async function checkAheadBehind() {
+  if (!repositoryStore.currentRepository) return;
+  try {
+    const result = await window.electronAPI.getAheadBehind(
+      repositoryStore.currentRepository
+    );
+    commitsAhead.value = result.ahead;
+  } catch (e) {
+    console.error("Failed to check ahead/behind:", e);
+    commitsAhead.value = 0;
+  }
+}
+
 async function refreshStatus() {
   isLoading.value = true;
   await repositoryStore.loadGitStatus();
+  await checkAheadBehind();
   isLoading.value = false;
 }
 

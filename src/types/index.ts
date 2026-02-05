@@ -69,6 +69,9 @@ export interface ElectronAPI {
     filePath: string,
     staged: boolean
   ) => Promise<string>;
+  getAheadBehind: (
+    repoPath: string
+  ) => Promise<{ ahead: number; behind: number }>;
 
   // Analysis operations
   analyzeRepository: (repoPath: string) => Promise<AnalysisResult>;
