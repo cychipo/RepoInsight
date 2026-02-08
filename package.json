@@ -6,6 +6,10 @@
     "scripts": {
         "dev": "vite",
         "build": "vue-tsc --noEmit && vite build && electron-builder",
+        "build:windows": "vue-tsc --noEmit && vite build && electron-builder --win",
+        "build:linux": "vue-tsc --noEmit && vite build && electron-builder --linux",
+        "build:macos": "vue-tsc --noEmit && vite build && electron-builder --mac",
+        "build:all": "vue-tsc --noEmit && vite build && electron-builder --win --mac --linux",
         "preview": "vite preview",
         "type-check": "vue-tsc --noEmit"
     },
