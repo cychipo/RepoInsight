@@ -37,16 +37,14 @@
       <div class="text-6xl opacity-30">▤</div>
       <h3 class="text-xl font-bold m-0">CHƯA CHỌN KHO CHỨA</h3>
       <p>Chọn một kho chứa từ trang chủ để xem kết quả phân tích.</p>
-      <router-link to="/" class="btn btn-primary"
-        >◆ MỞ KHO CHỨA</router-link
-      >
+      <router-link to="/" class="btn btn-primary">◆ MỞ KHO CHỨA</router-link>
     </div>
 
     <!-- Analysis Results -->
     <template v-else>
       <div class="grid grid-cols-4 gap-4">
         <div
-          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal "
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
           style="background: #00d4ff !important">
           <div class="text-4xl font-bold mb-1">
             {{ graphStore.stats.commits }}
@@ -55,7 +53,7 @@
         </div>
 
         <div
-          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal "
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
           style="background: #7cff6b !important">
           <div class="text-4xl font-bold mb-1">
             {{ graphStore.stats.files }}
@@ -64,25 +62,21 @@
         </div>
 
         <div
-          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal "
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
           style="background: #ff9e2c !important">
           <div class="text-4xl font-bold mb-1">
             {{ graphStore.stats.functions }}
           </div>
-          <div class="text-xs font-bold uppercase tracking-wider">
-            HÀM
-          </div>
+          <div class="text-xs font-bold uppercase tracking-wider">HÀM</div>
         </div>
 
         <div
-          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal "
+          class="flex flex-col items-center justify-center h-[120px] p-4 border-3 border-neo-black shadow-brutal"
           style="background: #ff6b9d !important">
           <div class="text-4xl font-bold mb-1">
             {{ graphStore.stats.totalEdges }}
           </div>
-          <div class="text-xs font-bold uppercase tracking-wider">
-            QUAN HỆ
-          </div>
+          <div class="text-xs font-bold uppercase tracking-wider">QUAN HỆ</div>
         </div>
       </div>
 
@@ -91,8 +85,8 @@
         <div class="card card-accent-pink">
           <div
             class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
-            <h3 class="text-lg font-bold m-0">★ TỆP THAY ĐỔI NHIỀU</h3>
-            <span class="badge badge-pink">THAY ĐỔI NHIỀU NHẤT</span>
+            <h3 class="text-lg font-bold m-0">★ TỆP RỦI RO CAO</h3>
+            <span class="badge badge-pink">HOTSPOT SCORE</span>
           </div>
           <div class="flex flex-col gap-2 max-h-[320px] overflow-y-auto">
             <div
@@ -111,9 +105,18 @@
                   (file.metadata as any).language
                 }}</span>
               </div>
-              <span class="badge badge-danger"
-                >{{ (file.metadata as any).modifyCount }}×</span
-              >
+              <!-- Risk Score Badge -->
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-bold px-2 py-0.5 border-2 border-neo-black"
+                  :class="getRiskBadgeClass(file.hotspotScore)"
+                  :title="`Hotspot Score: ${file.hotspotScore}/100`"
+                  >{{ file.hotspotScore }}</span
+                >
+                <span class="badge badge-danger"
+                  >{{ (file.metadata as any).modifyCount }}×</span
+                >
+              </div>
             </div>
             <div
               v-if="hotspotFiles.length === 0"
@@ -161,7 +164,8 @@
 
         <!-- Co-Change Patterns -->
         <div class="card card-accent-blue col-span-full">
-            <div class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
+          <div
+            class="flex items-center justify-between mb-4 pb-2 border-b-3 border-neo-black">
             <h3 class="text-lg font-bold m-0">◈ MẪU ĐỒNG THAY ĐỔI</h3>
             <span class="badge badge-primary">TỆP THAY ĐỔI CÙNG NHAU</span>
           </div>
@@ -257,5 +261,12 @@ async function runAnalysis() {
 
 function getFileName(path: string): string {
   return path.split("/").pop() || path;
+}
+
+function getRiskBadgeClass(score: number): string {
+  if (score >= 75) return "bg-neo-red text-white"; // Critical risk
+  if (score >= 50) return "bg-neo-orange text-black"; // High risk
+  if (score >= 25) return "bg-neo-yellow text-black"; // Medium risk
+  return "bg-neo-green text-black"; // Low risk
 }
 </script>

@@ -70,14 +70,57 @@ export const useGraphStore = defineStore("graph", () => {
     buildProgress.value = 0;
   }
 
+  // Calculate hotspot score for a file
+  // Score = normalized(frequency) * 0.5 + normalized(churn) * 0.5
+  function calculateHotspotScore(node: GraphNode): number {
+    const metadata = node.metadata as any;
+    const modifyCount = metadata.modifyCount || 0;
+    const churn = (metadata.insertions || 0) + (metadata.deletions || 0);
+
+    // Find max values for normalization
+    const allFiles = fileNodes.value;
+    const maxModifyCount = Math.max(
+      ...allFiles.map((f) => (f.metadata as any).modifyCount || 0),
+      1
+    );
+    const maxChurn = Math.max(
+      ...allFiles.map(
+        (f) =>
+          ((f.metadata as any).insertions || 0) +
+          ((f.metadata as any).deletions || 0)
+      ),
+      1
+    );
+
+    // Normalize to 0-1 range
+    const normalizedFreq = modifyCount / maxModifyCount;
+    const normalizedChurn = churn / maxChurn;
+
+    // Combined score (0-100)
+    return Math.round((normalizedFreq * 0.5 + normalizedChurn * 0.5) * 100);
+  }
+
+  // Get hotspot score for a specific file path
+  function getFileHotspotScore(filePath: string): number {
+    const fileNode = fileNodes.value.find(
+      (f) => f.label === filePath || f.id === filePath
+    );
+    if (!fileNode) return 0;
+    return calculateHotspotScore(fileNode);
+  }
+
   // Query functions
-  function getMostModifiedFiles(limit = 10): GraphNode[] {
+  type HotspotFile = GraphNode & {
+    hotspotScore: number;
+  };
+
+  function getMostModifiedFiles(limit = 10): HotspotFile[] {
     return [...fileNodes.value]
-      .sort((a, b) => {
-        const aCount = (a.metadata as any).modifyCount || 0;
-        const bCount = (b.metadata as any).modifyCount || 0;
-        return bCount - aCount;
-      })
+      .map((node) => ({
+        ...node,
+        hotspotScore: calculateHotspotScore(node),
+      }))
+      .sort((a, b) => b.hotspotScore - a.hotspotScore)
       .slice(0, limit);
   }
 
@@ -152,5 +195,6 @@ export const useGraphStore = defineStore("graph", () => {
     getMostModifiedFiles,
     getHotspotFunctions,
     getCoChangePatterns,
+    getFileHotspotScore,
   };
 });

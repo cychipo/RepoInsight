@@ -129,6 +129,28 @@
               </template>
 
               <template v-else-if="selectedNode.type === 'file'">
+                <!-- Hotspot Score Banner -->
+                <div
+                  class="flex items-center justify-between p-3 border-3 border-neo-black mb-2"
+                  :class="
+                    getRiskBannerClass(getFileHotspotScore(selectedNode.id))
+                  ">
+                  <div class="flex flex-col">
+                    <span class="text-xs font-bold tracking-wider opacity-80"
+                      >ĐIỂM RỦI RO</span
+                    >
+                    <span class="text-2xl font-bold"
+                      >{{ getFileHotspotScore(selectedNode.id) }}/100</span
+                    >
+                  </div>
+                  <div class="text-right">
+                    <span
+                      class="text-sm font-bold px-2 py-1 bg-neo-white/50 border-2 border-neo-black">
+                      {{ getRiskLabel(getFileHotspotScore(selectedNode.id)) }}
+                    </span>
+                  </div>
+                </div>
+
                 <div class="flex flex-col gap-1">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
                     >ĐƯỜNG DẪN</span
@@ -145,14 +167,57 @@
                     selectedNode.metadata.language
                   }}</span>
                 </div>
-                <div class="flex flex-col gap-1">
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                  <div
+                    class="flex flex-col p-2 bg-neo-blue/20 border-2 border-neo-black text-center">
+                    <span class="text-xl font-bold">{{
+                      selectedNode.metadata.modifyCount || 0
+                    }}</span>
+                    <span class="text-xs font-bold">LẦN SỬA</span>
+                  </div>
+                  <div
+                    class="flex flex-col p-2 bg-neo-pink/20 border-2 border-neo-black text-center">
+                    <span class="text-xl font-bold">{{
+                      getFileContributors(selectedNode.id)
+                    }}</span>
+                    <span class="text-xs font-bold">TÁC GIẢ</span>
+                  </div>
+                </div>
+
+                <!-- Co-Change Files -->
+                <div
+                  class="flex flex-col gap-1 mt-2"
+                  v-if="getCoChangeFilesForNode(selectedNode.id).length > 0">
                   <span class="text-xs font-bold text-stone-500 tracking-wider"
-                    >SỬA ĐỔI</span
+                    >THƯỜNG THAY ĐỔI CÙNG</span
                   >
-                  <span
-                    class="text-sm font-semibold break-all bg-neo-yellow px-1 inline-block w-max"
-                    >{{ selectedNode.metadata.modifyCount }}</span
-                  >
+                  <div
+                    class="flex flex-col gap-1 max-h-[100px] overflow-y-auto">
+                    <div
+                      v-for="coFile in getCoChangeFilesForNode(
+                        selectedNode.id
+                      ).slice(0, 5)"
+                      :key="coFile.file"
+                      class="flex items-center gap-2 text-xs bg-neo-white/50 p-1 border border-stone-300">
+                      <span class="flex-1 truncate font-mono">{{
+                        getFileName(coFile.file)
+                      }}</span>
+                      <span class="badge badge-primary text-[10px]"
+                        >{{ coFile.count }}×</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Risk Explanation -->
+                <div
+                  class="flex flex-col gap-1 mt-2 p-2 bg-stone-100 border-2 border-stone-300 text-xs">
+                  <span class="font-bold text-stone-600">💡 GIẢI THÍCH</span>
+                  <p class="text-stone-600 leading-relaxed">
+                    {{ getRiskExplanation(selectedNode) }}
+                  </p>
                 </div>
               </template>
 
@@ -487,6 +552,102 @@ onUnmounted(() => {
     cy = null;
   }
 });
+
+// Helper functions for file risk explanation
+function getFileHotspotScore(fileId: string): number {
+  return graphStore.getFileHotspotScore(fileId);
+}
+
+function getRiskBannerClass(score: number): string {
+  if (score >= 75) return "bg-neo-red";
+  if (score >= 50) return "bg-neo-orange";
+  if (score >= 25) return "bg-neo-yellow";
+  return "bg-neo-green";
+}
+
+function getRiskLabel(score: number): string {
+  if (score >= 75) return "RỦI RO CAO";
+  if (score >= 50) return "RỦI RO TB";
+  if (score >= 25) return "RỦI RO THẤP";
+  return "AN TOÀN";
+}
+
+function getFileContributors(fileId: string): number {
+  // Count unique authors who modified this file
+  const commits = graphStore.graph.edges
+    .filter((e) => e.type === "MODIFIES" && e.target === fileId)
+    .map((e) => e.source);
+
+  const authorSet = new Set<string>();
+  commits.forEach((commitId) => {
+    const commit = graphStore.graph.nodes.find((n) => n.id === commitId);
+    const metadata = commit?.metadata as any;
+    if (metadata?.author) {
+      authorSet.add(metadata.author);
+    }
+  });
+
+  return authorSet.size || 1;
+}
+
+function getCoChangeFilesForNode(
+  fileId: string
+): { file: string; count: number }[] {
+  const coChangePatterns = graphStore.getCoChangePatterns();
+  const results: { file: string; count: number }[] = [];
+
+  for (const pattern of coChangePatterns) {
+    if (pattern.files.includes(fileId)) {
+      const otherFile = pattern.files.find((f) => f !== fileId);
+      if (otherFile) {
+        results.push({ file: otherFile, count: pattern.count });
+      }
+    }
+  }
+
+  return results.sort((a, b) => b.count - a.count);
+}
+
+function getFileName(path: string): string {
+  return path.split("/").pop() || path;
+}
+
+function getRiskExplanation(node: GraphNode): string {
+  const score = getFileHotspotScore(node.id);
+  const modifyCount = (node.metadata as any).modifyCount || 0;
+  const contributors = getFileContributors(node.id);
+  const coChangeFiles = getCoChangeFilesForNode(node.id).length;
+
+  const parts: string[] = [];
+
+  if (modifyCount > 10) {
+    parts.push(`Tệp này được sửa đổi ${modifyCount} lần`);
+  } else if (modifyCount > 5) {
+    parts.push(`Tệp có tần suất thay đổi trung bình (${modifyCount} lần)`);
+  } else {
+    parts.push(`Tệp ít được thay đổi (${modifyCount} lần)`);
+  }
+
+  if (contributors > 3) {
+    parts.push(
+      `có ${contributors} tác giả tham gia sửa đổi (ownership phân tán)`
+    );
+  } else if (contributors > 1) {
+    parts.push(`có ${contributors} tác giả tham gia`);
+  }
+
+  if (coChangeFiles > 0) {
+    parts.push(`thường được sửa cùng ${coChangeFiles} tệp khác`);
+  }
+
+  if (score >= 75) {
+    parts.push("Cần chú ý khi refactor.");
+  } else if (score >= 50) {
+    parts.push("Nên review kỹ khi thay đổi.");
+  }
+
+  return parts.join(", ") + ".";
+}
 </script>
 
 <style scoped>

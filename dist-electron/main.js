@@ -1,12 +1,1112 @@
-"use strict";var j=Object.create;var v=Object.defineProperty;var x=Object.getOwnPropertyDescriptor;var k=Object.getOwnPropertyNames;var B=Object.getPrototypeOf,T=Object.prototype.hasOwnProperty;var W=(i,t,e,s)=>{if(t&&typeof t=="object"||typeof t=="function")for(let a of k(t))!T.call(i,a)&&a!==e&&v(i,a,{get:()=>t[a],enumerable:!(s=x(t,a))||s.enumerable});return i};var N=(i,t,e)=>(e=i!=null?j(B(i)):{},W(t||!i||!i.__esModule?v(e,"default",{value:i,enumerable:!0}):e,i));const u=require("electron"),S=require("path"),_=require("fs"),E=require("child_process"),L=require("util"),A=require("fs/promises"),O=L.promisify(E.exec);async function g(i,t){const{stdout:e}=await O(`git ${t}`,{cwd:i,maxBuffer:52428800});return e.trim()}function V(){u.ipcMain.handle("git:getRepositoryInfo",async(i,t)=>{try{const e=await g(t,"rev-parse --abbrev-ref HEAD"),s=await g(t,"rev-list --count HEAD"),a=parseInt(s,10),o=(await g(t,"shortlog -sn HEAD")).split(`
-`).filter(h=>h.trim()).length,l=await g(t,"log --reverse --format=%aI | head -1"),f=await g(t,"log -1 --format=%aI");return{name:S.basename(t),path:t,currentBranch:e,totalCommits:a,totalContributors:o,firstCommitDate:new Date(l),lastCommitDate:new Date(f)}}catch(e){throw console.error("Failed to get repository info:",e),e}}),u.ipcMain.handle("git:getCommits",async(i,t,e=10,s=0,a)=>{try{const r="%H|%h|%an|%ae|%aI|%s",o=a||"HEAD",l=e>0?`-n ${e}`:"",f=s>0?`--skip=${s}`:"",h=await g(t,`log ${o} --format="${r}" --shortstat ${l} ${f}`),d=[],n=h.split(`
-`);let c=0;for(;c<n.length;){const p=n[c].trim();if(!p){c++;continue}if(p.includes("file changed")||p.includes("files changed")){c++;continue}const m=p.split("|");if(m.length>=6){const $={hash:m[0],shortHash:m[1],author:m[2],authorEmail:m[3],date:new Date(m[4]),message:m[5],filesChanged:0,insertions:0,deletions:0};for(let w=c+1;w<Math.min(c+3,n.length);w++){const y=n[w].trim();if(y&&(y.includes("file changed")||y.includes("files changed"))){const D=y.match(/(\d+) files? changed/),C=y.match(/(\d+) insertions?\s*\(\+\)/),F=y.match(/(\d+) deletions?\s*\(-\)/);D&&($.filesChanged=parseInt(D[1],10)),C&&($.insertions=parseInt(C[1],10)),F&&($.deletions=parseInt(F[1],10));break}}d.push($)}c++}return d}catch(r){throw console.error("Failed to get commits:",r),r}}),u.ipcMain.handle("git:getFileChanges",async(i,t,e)=>{try{const s=await g(t,`diff-tree --no-commit-id --name-status -r ${e}`),a=[],r=s.split(`
-`).filter(o=>o.trim());for(const o of r){const[l,...f]=o.split("	"),h=f.join("	");let d="modified",n;l.startsWith("R")?(d="renamed",n=h):l==="A"?d="added":l==="D"?d="deleted":l==="M"&&(d="modified");let c=0,p=0;try{const m=(await g(t,`diff-tree --no-commit-id --numstat -r ${e} -- "${h}"`)).split(`
-`)[0];if(m){const[$,w]=m.split("	");c=$==="-"?0:parseInt($,10)||0,p=w==="-"?0:parseInt(w,10)||0}}catch{}a.push({path:h,status:d,insertions:c,deletions:p,previousPath:n})}return a}catch(s){throw console.error("Failed to get file changes:",s),s}}),u.ipcMain.handle("analysis:analyzeRepository",async(i,t)=>{const e=u.BrowserWindow.fromWebContents(i.sender);if(!e)throw new Error("No main window found");const s=(a,r,o,l)=>{e.webContents.send("analysis:progress",{stage:a,current:r,total:o,message:l})};try{s("commits",0,100,"Loading commits...");const r=(await g(t,'log --format="%H|%h|%an|%aI|%s" --all')).split(`
-`).filter(n=>n.trim()),o=[],l=[],f=new Map;for(let n=0;n<r.length;n++){const c=r[n].split("|");if(c.length>=5){const p={id:`commit:${c[0]}`,type:"commit",label:c[1],metadata:{hash:c[0],author:c[2],date:new Date(c[3]),message:c[4]}};o.push(p)}n%100===0&&s("commits",n,r.length,`Processing commit ${n}/${r.length}`)}s("files",0,100,"Analyzing file changes...");const h=r.slice(0,Math.min(r.length,200));for(let n=0;n<h.length;n++){const c=h[n].split("|")[0];try{const b=(await g(t,`diff-tree --no-commit-id --name-only -r ${c}`)).split(`
-`).filter(m=>m.trim());for(const m of b){const $=`file:${m}`;if(!o.find(w=>w.id===$)){const w=S.extname(m).slice(1),y=G(w);o.push({id:$,type:"file",label:S.basename(m),metadata:{path:m,extension:w,language:y,modifyCount:0}})}f.set($,(f.get($)||0)+1),l.push({id:`edge:${c}-${m}`,source:`commit:${c}`,target:$,type:"MODIFIES"})}}catch{}n%20===0&&s("files",n,h.length,`Analyzing commit ${n}/${h.length}`)}for(const n of o)n.type==="file"&&(n.metadata.modifyCount=f.get(n.id)||0);s("analysis",0,100,"Analyzing code structure...");const d=o.filter(n=>n.type==="file"&&["js","ts","jsx","tsx"].includes(n.metadata.extension));for(let n=0;n<d.length;n++){const c=d[n],p=c.metadata.path,b=S.join(t,p);try{const m=await A.readFile(b,"utf-8"),$=U(m);await Promise.all($.map(async w=>{const y=`function:${p}:${w.name}`;let D=0;try{D=((await g(t,`log -L ${w.startLine},${w.endLine}:"${p}" --format="COMMIT:%H"`)).match(/COMMIT:[a-f0-9]+/g)||[]).length}catch{}o.push({id:y,type:"function",label:w.name,metadata:{name:w.name,filePath:p,startLine:w.startLine,endLine:w.endLine,parameters:w.parameters,modifyCount:D}}),l.push({id:`edge:${c.id}-${y}`,source:c.id,target:y,type:"CONTAINS"})}))}catch{}n%10===0&&s("analysis",n,d.length,`Analyzing ${n}/${d.length} files`)}return s("complete",100,100,"Analysis complete!"),{success:!0,graph:{nodes:o,edges:l},stats:{totalCommits:o.filter(n=>n.type==="commit").length,totalFiles:o.filter(n=>n.type==="file").length,totalFunctions:o.filter(n=>n.type==="function").length,totalRelationships:l.length,analysisTime:0}}}catch(a){return console.error("Analysis failed:",a),{success:!1,graph:{nodes:[],edges:[]},stats:{totalCommits:0,totalFiles:0,totalFunctions:0,totalRelationships:0,analysisTime:0},error:a instanceof Error?a.message:"Unknown error"}}}),u.ipcMain.handle("git:getGitGraph",async(i,t,e=500)=>{try{const a=(await g(t,"branch -a --format='%(refname:short)'")).split(`
-`).filter(n=>n.trim()),r=new Map;for(const n of a)try{const p=(await g(t,`rev-parse "${n.replace(/'/g,"")}"`)).trim(),b=n.replace(/'/g,"");r.has(p)||r.set(p,[]),r.get(p).push(b)}catch{}const o="%H|%h|%P|%an|%ae|%aI|%D|%s",l=e>0?`-n ${e}`:"",f=await g(t,`log --all --format="${o}" ${l}`),h=[],d=f.split(`
-`).filter(n=>n.trim());for(const n of d){const c=n.split("|");if(c.length>=8){const p=c[0],b=c[2]?c[2].split(" ").filter(y=>y):[];let m=[];const $=c[6];$&&(m=$.split(",").map(y=>y.trim()).map(y=>y.replace(/^HEAD -> /,"")).filter(y=>y&&y!=="HEAD"));const w=r.get(p)||[];for(const y of w)m.includes(y)||m.push(y);h.push({hash:p,shortHash:c[1],author:c[3],authorEmail:c[4],date:new Date(c[5]),message:c[7],parentHashes:b,refs:m})}}return h}catch(s){throw console.error("Failed to get git graph:",s),s}}),u.ipcMain.handle("git:cloneRepository",async(i,t,e)=>new Promise(s=>{var f;const a=((f=t.split("/").pop())==null?void 0:f.replace(".git",""))||"repo",r=S.join(e,a),o=E.spawn("git",["clone","--progress",t,r]);let l="";o.stderr.on("data",h=>{const d=h.toString();l+=d;let n=0,c="cloning";if(d.includes("Counting objects"))c="counting";else if(d.includes("Compressing objects")){c="compressing";const b=d.match(/Compressing objects:\s*(\d+)%/);b&&(n=parseInt(b[1],10))}else if(d.includes("Receiving objects")){c="receiving";const b=d.match(/Receiving objects:\s*(\d+)%/);b&&(n=parseInt(b[1],10))}else if(d.includes("Resolving deltas")){c="resolving";const b=d.match(/Resolving deltas:\s*(\d+)%/);b&&(n=parseInt(b[1],10))}u.BrowserWindow.getAllWindows().forEach(b=>{b.webContents.send("clone-progress",{stage:c,percent:n,message:d.trim()})})}),o.on("close",h=>{s(h===0?{success:!0,path:r}:{success:!1,path:"",error:l||`Clone failed with code ${h}`})}),o.on("error",h=>{s({success:!1,path:"",error:h.message})})})),u.ipcMain.handle("git:getBranches",async(i,t)=>{try{const e=await g(t,"branch -a --format='%(refname:short)|%(HEAD)'"),s=[],a=e.split(`
-`).filter(r=>r.trim());for(const r of a){const[o,l]=r.replace(/'/g,"").split("|");if(!o||o.includes("HEAD"))continue;const f=o.startsWith("remotes/")||o.startsWith("origin/"),h=o.replace(/^remotes\//,"");s.find(d=>d.name===h)||s.push({name:h,isCurrent:l==="*",isRemote:f})}return s}catch(e){throw console.error("Failed to get branches:",e),e}}),u.ipcMain.handle("git:getStatus",async(i,t)=>{try{const{stdout:e}=await O("git status --porcelain",{cwd:t,maxBuffer:52428800}),s=[],a=e.split(`
-`).filter(r=>r.length>0);console.log("[git:getStatus] Raw output:",JSON.stringify(e)),console.log("[git:getStatus] Parsed lines:",a);for(const r of a){if(r.length<3)continue;const o=r[0],l=r[1],f=r.substring(3).trim();if(console.log(`[git:getStatus] Line: "${r}" | stagedStatus: "${o}" | unstagedStatus: "${l}" | path: "${f}"`),o==="?"&&l==="?"){s.push({path:f,status:"untracked",staged:!1});continue}o!==" "&&o!=="?"&&(console.log(`[git:getStatus] Adding as STAGED: ${f}`),s.push({path:f,status:R(o),staged:!0})),l!==" "&&l!=="?"&&(console.log(`[git:getStatus] Adding as UNSTAGED: ${f}`),s.push({path:f,status:R(l),staged:!1}))}return console.log("[git:getStatus] Final changes:",s),s}catch(e){throw console.error("Failed to get status:",e),e}}),u.ipcMain.handle("git:getAheadBehind",async(i,t)=>{try{const s=(await g(t,"rev-parse --abbrev-ref HEAD")).trim();try{await g(t,`rev-parse --verify origin/${s}`)}catch{return{ahead:0,behind:0}}const r=(await g(t,`rev-list --left-right --count ${s}...origin/${s}`)).trim().split(/\s+/),o=parseInt(r[0]||"0",10),l=parseInt(r[1]||"0",10);return{ahead:o,behind:l}}catch(e){return console.error("Failed to get ahead/behind:",e),{ahead:0,behind:0}}}),u.ipcMain.handle("git:rebase",async(i,t)=>{let e=!1;try{(await g(t,"status --porcelain")).trim().length>0&&(await g(t,'stash push -u -m "Auto stash by RepoInsight"'),e=!0);const r=await g(t,"rev-parse --abbrev-ref HEAD");if(await new Promise((o,l)=>{const f=["pull","--rebase","origin",r.trim()],h=E.spawn("git",f,{cwd:t,stdio:["ignore","pipe","pipe"]});let d="";h.stderr.on("data",n=>{d+=n.toString()}),h.on("close",n=>{n===0?o():l(new Error(d||`git pull --rebase failed with code ${n}`))}),h.on("error",n=>{l(n)})}),e)try{await g(t,"stash pop")}catch(o){return console.warn("Stash pop conflict:",o),{success:!0,message:"Đã rebase thành công, nhưng có xung đột khi khôi phục stash. Vui lòng kiểm tra và giải quyết xung đột.",stashed:!0,conflict:!0}}return{success:!0,message:e?"Đã rebase và khôi phục thay đổi thành công!":"Đã rebase thành công!",stashed:e}}catch(s){if(console.error("Rebase failed:",s),e)try{await g(t,"stash pop")}catch(a){console.error("Failed to pop stash after rebase error:",a)}return{success:!1,message:s.message||"Rebase thất bại. Vui lòng kiểm tra log.",stashed:e}}}),u.ipcMain.handle("git:checkoutBranch",async(i,t,e)=>{try{return await g(t,`checkout ${e}`),{success:!0}}catch(s){return{success:!1,error:s instanceof Error?s.message:"Failed to switch branch"}}}),u.ipcMain.handle("git:stageFile",async(i,t,e)=>{try{return await g(t,`add "${e}"`),{success:!0}}catch(s){return{success:!1,error:s instanceof Error?s.message:"Stage failed"}}}),u.ipcMain.handle("git:unstageFile",async(i,t,e)=>{try{return await g(t,`reset HEAD "${e}"`),{success:!0}}catch(s){return{success:!1,error:s instanceof Error?s.message:"Unstage failed"}}}),u.ipcMain.handle("git:stageAll",async(i,t)=>{try{return await g(t,"add -A"),{success:!0}}catch(e){return{success:!1,error:e instanceof Error?e.message:"Stage all failed"}}}),u.ipcMain.handle("git:unstageAll",async(i,t)=>{try{return await g(t,"reset HEAD"),{success:!0}}catch(e){return{success:!1,error:e instanceof Error?e.message:"Unstage all failed"}}}),u.ipcMain.handle("git:discardFile",async(i,t,e)=>{try{if((await g(t,`status --porcelain "${e}"`)).startsWith("??")){const a=S.join(t,e);await(await import("fs/promises")).unlink(a)}else await g(t,`checkout -- "${e}"`);return{success:!0}}catch(s){return{success:!1,error:s instanceof Error?s.message:"Discard failed"}}}),u.ipcMain.handle("git:discardAll",async(i,t)=>{try{return await g(t,"checkout -- ."),await g(t,"clean -fd"),{success:!0}}catch(e){return{success:!1,error:e instanceof Error?e.message:"Discard all failed"}}}),u.ipcMain.handle("git:commit",async(i,t,e)=>{try{const s=e.replace(/"/g,'\\"');return await g(t,`commit -m "${s}"`),{success:!0}}catch(s){return{success:!1,error:s instanceof Error?s.message:"Commit failed"}}}),u.ipcMain.handle("git:push",async(i,t)=>{try{return await g(t,"push"),{success:!0}}catch(e){return{success:!1,error:e instanceof Error?e.message:"Push failed"}}}),u.ipcMain.handle("git:getStagedDiff",async(i,t)=>{try{return await g(t,"diff --cached")}catch(e){return console.error("Failed to get staged diff:",e),""}}),u.ipcMain.handle("git:getUnstagedDiff",async(i,t)=>{try{return await g(t,"diff")}catch(e){return console.error("Failed to get unstaged diff:",e),""}}),u.ipcMain.handle("git:getFileDiff",async(i,t,e,s)=>{try{return await g(t,`diff ${s?"--cached":""} -- "${e}"`)}catch(a){return console.error("Failed to get file diff:",a),""}})}function R(i){return{M:"modified",A:"added",D:"deleted",R:"renamed",C:"copied",U:"unmerged","?":"untracked","!":"ignored"}[i]||"unknown"}function G(i){return{js:"JavaScript",jsx:"JavaScript (JSX)",ts:"TypeScript",tsx:"TypeScript (TSX)",vue:"Vue",py:"Python",rb:"Ruby",java:"Java",cpp:"C++",c:"C",go:"Go",rs:"Rust",php:"PHP",swift:"Swift",kt:"Kotlin",cs:"C#",html:"HTML",css:"CSS",scss:"SCSS",less:"LESS",json:"JSON",yaml:"YAML",yml:"YAML",md:"Markdown",sh:"Shell",bash:"Bash"}[i.toLowerCase()]||i.toUpperCase()}function U(i){const t=[],e=i.split(`
-`),s=[/^\s*(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)/,/^\s*(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?\(([^)]*)\)\s*=>/,/^\s*(?:async\s+)?(\w+)\s*\(([^)]*)\)\s*\{/,/^\s*(?:public|private|protected|static|async)?\s*(\w+)\s*\(([^)]*)\)\s*(?::\s*\w+)?\s*\{/];for(let a=0;a<e.length;a++){const r=e[a];for(const o of s){const l=r.match(o);if(l&&l[1]&&!["if","for","while","switch","catch","constructor"].includes(l[1])){const f=l[2]?l[2].split(",").map(c=>c.trim().split(":")[0].trim()).filter(c=>c):[];let h=a,d=0,n=!1;for(let c=a;c<Math.min(a+100,e.length);c++){for(const p of e[c])p==="{"?(d++,n=!0):p==="}"&&d--;if(n&&d===0){h=c;break}}t.push({name:l[1],startLine:a+1,endLine:h+1,parameters:f});break}}}return t}const I=L.promisify(E.exec);function J(){const i=u.app.getPath("userData"),t=S.join(i,"config.json");u.ipcMain.handle("settings:getGitConfig",async(e,s,a)=>{try{const r=a?`git config ${s}`:`git config --global ${s}`,o=a||void 0,{stdout:l}=await I(r,{cwd:o});return l.trim()}catch{return""}}),u.ipcMain.handle("settings:setGitConfig",async(e,s,a,r)=>{try{const o=r?`git config --local ${s} "${a}"`:`git config --global ${s} "${a}"`;return await I(o,{cwd:r||void 0}),!0}catch(o){throw console.error(`Failed to set git config ${s}:`,o),o}}),u.ipcMain.handle("settings:getApiKey",async()=>{try{if(!_.existsSync(t))return"";const e=await A.readFile(t,"utf-8");return JSON.parse(e).geminiApiKey||""}catch(e){return console.error("Failed to read config:",e),""}}),u.ipcMain.handle("settings:setApiKey",async(e,s)=>{try{let a={};if(_.existsSync(t)){const r=await A.readFile(t,"utf-8");try{a=JSON.parse(r)}catch{}}return a.geminiApiKey=s,await A.writeFile(t,JSON.stringify(a,null,2)),!0}catch(a){throw console.error("Failed to save config:",a),a}})}let M=null;function H(){const i=process.env.VITE_DEV_SERVER_URL?S.join(__dirname,"../../public/icon.png"):S.join(__dirname,"../dist/icon.png");M=new u.BrowserWindow({width:1400,height:900,minWidth:1e3,minHeight:700,icon:i,webPreferences:{preload:S.join(__dirname,"preload.js"),nodeIntegration:!1,contextIsolation:!0},backgroundColor:"#0f172a"}),process.env.VITE_DEV_SERVER_URL?(M.loadURL(process.env.VITE_DEV_SERVER_URL),M.webContents.openDevTools()):M.loadFile(S.join(__dirname,"../dist/index.html")),M.on("closed",()=>{M=null})}u.app.whenReady().then(()=>{V(),J(),H()});u.app.on("window-all-closed",()=>{process.platform!=="darwin"&&u.app.quit()});u.app.on("activate",()=>{u.BrowserWindow.getAllWindows().length===0&&H()});u.ipcMain.handle("dialog:selectRepository",async()=>{const i=await u.dialog.showOpenDialog(M,{properties:["openDirectory"],title:"Select Git Repository"});if(i.canceled||i.filePaths.length===0)return{success:!1,path:null};const t=i.filePaths[0],e=S.join(t,".git"),s=_.existsSync(e);return{success:s,path:t,error:s?null:"Selected folder is not a Git repository (.git folder not found)"}});u.ipcMain.handle("dialog:selectDirectory",async()=>{const i=await u.dialog.showOpenDialog(M,{properties:["openDirectory","createDirectory"],title:"Select Clone Destination"});return i.canceled||i.filePaths.length===0?{success:!1,path:null}:{success:!0,path:i.filePaths[0]}});
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+const electron = require("electron");
+const path = require("path");
+const fs = require("fs");
+const child_process = require("child_process");
+const util = require("util");
+const promises = require("fs/promises");
+const execAsync$1 = util.promisify(child_process.exec);
+async function runGitCommand(repoPath, command) {
+  const { stdout } = await execAsync$1(`git ${command}`, {
+    cwd: repoPath,
+    maxBuffer: 50 * 1024 * 1024
+    // 50MB buffer for large repos
+  });
+  return stdout.trim();
+}
+function registerGitHandlers() {
+  electron.ipcMain.handle(
+    "git:getRepositoryInfo",
+    async (_, repoPath) => {
+      try {
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+        const commitCountStr = await runGitCommand(
+          repoPath,
+          "rev-list --count HEAD"
+        );
+        const totalCommits = parseInt(commitCountStr, 10);
+        const contributorsOutput = await runGitCommand(
+          repoPath,
+          "shortlog -sn HEAD"
+        );
+        const totalContributors = contributorsOutput.split("\n").filter((l) => l.trim()).length;
+        const firstCommitDate = await runGitCommand(
+          repoPath,
+          "log --reverse --format=%aI | head -1"
+        );
+        const lastCommitDate = await runGitCommand(
+          repoPath,
+          "log -1 --format=%aI"
+        );
+        return {
+          name: path.basename(repoPath),
+          path: repoPath,
+          currentBranch,
+          totalCommits,
+          totalContributors,
+          firstCommitDate: new Date(firstCommitDate),
+          lastCommitDate: new Date(lastCommitDate)
+        };
+      } catch (error) {
+        console.error("Failed to get repository info:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getCommits",
+    async (_, repoPath, limit = 10, offset = 0, branch) => {
+      try {
+        const format = "%H|%h|%an|%ae|%aI|%s";
+        const branchArg = branch ? branch : "HEAD";
+        const limitArg = limit > 0 ? `-n ${limit}` : "";
+        const skipArg = offset > 0 ? `--skip=${offset}` : "";
+        const output = await runGitCommand(
+          repoPath,
+          `log ${branchArg} --format="${format}" --shortstat ${limitArg} ${skipArg}`
+        );
+        const commits = [];
+        const lines = output.split("\n");
+        let i = 0;
+        while (i < lines.length) {
+          const line = lines[i].trim();
+          if (!line) {
+            i++;
+            continue;
+          }
+          const isStatsLine = line.includes("file changed") || line.includes("files changed");
+          if (isStatsLine) {
+            i++;
+            continue;
+          }
+          const parts = line.split("|");
+          if (parts.length >= 6) {
+            const commit = {
+              hash: parts[0],
+              shortHash: parts[1],
+              author: parts[2],
+              authorEmail: parts[3],
+              date: new Date(parts[4]),
+              message: parts[5],
+              filesChanged: 0,
+              insertions: 0,
+              deletions: 0
+            };
+            for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+              const statsLine = lines[j].trim();
+              if (!statsLine) continue;
+              if (statsLine.includes("file changed") || statsLine.includes("files changed")) {
+                const filesMatch = statsLine.match(/(\d+) files? changed/);
+                const insertMatch = statsLine.match(
+                  /(\d+) insertions?\s*\(\+\)/
+                );
+                const deleteMatch = statsLine.match(/(\d+) deletions?\s*\(-\)/);
+                if (filesMatch) {
+                  commit.filesChanged = parseInt(filesMatch[1], 10);
+                }
+                if (insertMatch) {
+                  commit.insertions = parseInt(insertMatch[1], 10);
+                }
+                if (deleteMatch) {
+                  commit.deletions = parseInt(deleteMatch[1], 10);
+                }
+                break;
+              }
+            }
+            commits.push(commit);
+          }
+          i++;
+        }
+        return commits;
+      } catch (error) {
+        console.error("Failed to get commits:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getFileChanges",
+    async (_, repoPath, commitHash) => {
+      try {
+        const output = await runGitCommand(
+          repoPath,
+          `diff-tree --no-commit-id --name-status -r ${commitHash}`
+        );
+        const changes = [];
+        const lines = output.split("\n").filter((l) => l.trim());
+        for (const line of lines) {
+          const [statusCode, ...pathParts] = line.split("	");
+          const path2 = pathParts.join("	");
+          let status = "modified";
+          let previousPath;
+          if (statusCode.startsWith("R")) {
+            status = "renamed";
+            previousPath = path2;
+          } else if (statusCode === "A") {
+            status = "added";
+          } else if (statusCode === "D") {
+            status = "deleted";
+          } else if (statusCode === "M") {
+            status = "modified";
+          }
+          let insertions = 0;
+          let deletions = 0;
+          try {
+            const numstatOutput = await runGitCommand(
+              repoPath,
+              `diff-tree --no-commit-id --numstat -r ${commitHash} -- "${path2}"`
+            );
+            const numstatLine = numstatOutput.split("\n")[0];
+            if (numstatLine) {
+              const [ins, del] = numstatLine.split("	");
+              insertions = ins === "-" ? 0 : parseInt(ins, 10) || 0;
+              deletions = del === "-" ? 0 : parseInt(del, 10) || 0;
+            }
+          } catch (e) {
+          }
+          changes.push({
+            path: path2,
+            status,
+            insertions,
+            deletions,
+            previousPath
+          });
+        }
+        return changes;
+      } catch (error) {
+        console.error("Failed to get file changes:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "analysis:analyzeRepository",
+    async (event, repoPath) => {
+      const mainWindow2 = electron.BrowserWindow.fromWebContents(event.sender);
+      if (!mainWindow2) throw new Error("No main window found");
+      const sendProgress = (stage, current, total, message) => {
+        mainWindow2.webContents.send("analysis:progress", {
+          stage,
+          current,
+          total,
+          message
+        });
+      };
+      try {
+        sendProgress("commits", 0, 100, "Loading commits...");
+        const commitsOutput = await runGitCommand(
+          repoPath,
+          'log --format="%H|%h|%an|%aI|%s" --all'
+        );
+        const commitLines = commitsOutput.split("\n").filter((l) => l.trim());
+        const nodes = [];
+        const edges = [];
+        const fileModifyCount = /* @__PURE__ */ new Map();
+        for (let i = 0; i < commitLines.length; i++) {
+          const parts = commitLines[i].split("|");
+          if (parts.length >= 5) {
+            const commitNode = {
+              id: `commit:${parts[0]}`,
+              type: "commit",
+              label: parts[1],
+              metadata: {
+                hash: parts[0],
+                author: parts[2],
+                date: new Date(parts[3]),
+                message: parts[4]
+              }
+            };
+            nodes.push(commitNode);
+          }
+          if (i % 100 === 0) {
+            sendProgress(
+              "commits",
+              i,
+              commitLines.length,
+              `Processing commit ${i}/${commitLines.length}`
+            );
+          }
+        }
+        sendProgress("files", 0, 100, "Analyzing file changes...");
+        const recentCommits = commitLines.slice(
+          0,
+          Math.min(commitLines.length, 200)
+        );
+        for (let i = 0; i < recentCommits.length; i++) {
+          const hash = recentCommits[i].split("|")[0];
+          try {
+            const filesOutput = await runGitCommand(
+              repoPath,
+              `diff-tree --no-commit-id --name-only -r ${hash}`
+            );
+            const files = filesOutput.split("\n").filter((f) => f.trim());
+            for (const filePath of files) {
+              const fileId = `file:${filePath}`;
+              if (!nodes.find((n) => n.id === fileId)) {
+                const ext = path.extname(filePath).slice(1);
+                const language = getLanguageFromExtension(ext);
+                nodes.push({
+                  id: fileId,
+                  type: "file",
+                  label: path.basename(filePath),
+                  metadata: {
+                    path: filePath,
+                    extension: ext,
+                    language,
+                    modifyCount: 0
+                  }
+                });
+              }
+              fileModifyCount.set(
+                fileId,
+                (fileModifyCount.get(fileId) || 0) + 1
+              );
+              edges.push({
+                id: `edge:${hash}-${filePath}`,
+                source: `commit:${hash}`,
+                target: fileId,
+                type: "MODIFIES"
+              });
+            }
+          } catch (e) {
+          }
+          if (i % 20 === 0) {
+            sendProgress(
+              "files",
+              i,
+              recentCommits.length,
+              `Analyzing commit ${i}/${recentCommits.length}`
+            );
+          }
+        }
+        for (const node of nodes) {
+          if (node.type === "file") {
+            node.metadata.modifyCount = fileModifyCount.get(node.id) || 0;
+          }
+        }
+        sendProgress("analysis", 0, 100, "Analyzing code structure...");
+        const codeFiles = nodes.filter(
+          (n) => n.type === "file" && ["js", "ts", "jsx", "tsx"].includes(n.metadata.extension)
+        );
+        for (let i = 0; i < codeFiles.length; i++) {
+          const fileNode = codeFiles[i];
+          const filePath = fileNode.metadata.path;
+          const fullPath = path.join(repoPath, filePath);
+          try {
+            const content = await promises.readFile(fullPath, "utf-8");
+            const functions = extractFunctions(content);
+            await Promise.all(
+              functions.map(async (func) => {
+                const funcId = `function:${filePath}:${func.name}`;
+                let modifyCount = 0;
+                try {
+                  const logOutput = await runGitCommand(
+                    repoPath,
+                    `log -L ${func.startLine},${func.endLine}:"${filePath}" --format="COMMIT:%H"`
+                  );
+                  modifyCount = (logOutput.match(/COMMIT:[a-f0-9]+/g) || []).length;
+                } catch (e) {
+                }
+                nodes.push({
+                  id: funcId,
+                  type: "function",
+                  label: func.name,
+                  metadata: {
+                    name: func.name,
+                    filePath,
+                    startLine: func.startLine,
+                    endLine: func.endLine,
+                    parameters: func.parameters,
+                    modifyCount
+                  }
+                });
+                edges.push({
+                  id: `edge:${fileNode.id}-${funcId}`,
+                  source: fileNode.id,
+                  target: funcId,
+                  type: "CONTAINS"
+                });
+              })
+            );
+          } catch (e) {
+          }
+          if (i % 10 === 0) {
+            sendProgress(
+              "analysis",
+              i,
+              codeFiles.length,
+              `Analyzing ${i}/${codeFiles.length} files`
+            );
+          }
+        }
+        sendProgress("complete", 100, 100, "Analysis complete!");
+        return {
+          success: true,
+          graph: { nodes, edges },
+          stats: {
+            totalCommits: nodes.filter((n) => n.type === "commit").length,
+            totalFiles: nodes.filter((n) => n.type === "file").length,
+            totalFunctions: nodes.filter((n) => n.type === "function").length,
+            totalRelationships: edges.length,
+            analysisTime: 0
+          }
+        };
+      } catch (error) {
+        console.error("Analysis failed:", error);
+        return {
+          success: false,
+          graph: { nodes: [], edges: [] },
+          stats: {
+            totalCommits: 0,
+            totalFiles: 0,
+            totalFunctions: 0,
+            totalRelationships: 0,
+            analysisTime: 0
+          },
+          error: error instanceof Error ? error.message : "Unknown error"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getGitGraph",
+    async (_, repoPath, limit = 500) => {
+      try {
+        const branchOutput = await runGitCommand(
+          repoPath,
+          "branch -a --format='%(refname:short)'"
+        );
+        const branches = branchOutput.split("\n").filter((b) => b.trim());
+        const branchHeads = /* @__PURE__ */ new Map();
+        for (const branch of branches) {
+          try {
+            const hash = await runGitCommand(
+              repoPath,
+              `rev-parse "${branch.replace(/'/g, "")}"`
+            );
+            const cleanHash = hash.trim();
+            const cleanBranch = branch.replace(/'/g, "");
+            if (!branchHeads.has(cleanHash)) {
+              branchHeads.set(cleanHash, []);
+            }
+            branchHeads.get(cleanHash).push(cleanBranch);
+          } catch {
+          }
+        }
+        const format = "%H|%h|%P|%an|%ae|%aI|%D|%s";
+        const limitArg = limit > 0 ? `-n ${limit}` : "";
+        const output = await runGitCommand(
+          repoPath,
+          `log --all --format="${format}" ${limitArg}`
+        );
+        const commits = [];
+        const lines = output.split("\n").filter((l) => l.trim());
+        for (const line of lines) {
+          const parts = line.split("|");
+          if (parts.length >= 8) {
+            const hash = parts[0];
+            const parentHashes = parts[2] ? parts[2].split(" ").filter((p) => p) : [];
+            let refs = [];
+            const decorations = parts[6];
+            if (decorations) {
+              refs = decorations.split(",").map((d) => d.trim()).map((d) => d.replace(/^HEAD -> /, "")).filter((d) => d && d !== "HEAD");
+            }
+            const branchRefs = branchHeads.get(hash) || [];
+            for (const br of branchRefs) {
+              if (!refs.includes(br)) {
+                refs.push(br);
+              }
+            }
+            commits.push({
+              hash,
+              shortHash: parts[1],
+              author: parts[3],
+              authorEmail: parts[4],
+              date: new Date(parts[5]),
+              message: parts[7],
+              parentHashes,
+              refs
+            });
+          }
+        }
+        return commits;
+      } catch (error) {
+        console.error("Failed to get git graph:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:cloneRepository",
+    async (_, url, destPath) => {
+      return new Promise((resolve) => {
+        var _a;
+        const repoName = ((_a = url.split("/").pop()) == null ? void 0 : _a.replace(".git", "")) || "repo";
+        const fullPath = path.join(destPath, repoName);
+        const cloneProcess = child_process.spawn("git", [
+          "clone",
+          "--progress",
+          url,
+          fullPath
+        ]);
+        let errorOutput = "";
+        cloneProcess.stderr.on("data", (data) => {
+          const message = data.toString();
+          errorOutput += message;
+          let percent = 0;
+          let stage = "cloning";
+          if (message.includes("Counting objects")) {
+            stage = "counting";
+          } else if (message.includes("Compressing objects")) {
+            stage = "compressing";
+            const match = message.match(/Compressing objects:\s*(\d+)%/);
+            if (match) percent = parseInt(match[1], 10);
+          } else if (message.includes("Receiving objects")) {
+            stage = "receiving";
+            const match = message.match(/Receiving objects:\s*(\d+)%/);
+            if (match) percent = parseInt(match[1], 10);
+          } else if (message.includes("Resolving deltas")) {
+            stage = "resolving";
+            const match = message.match(/Resolving deltas:\s*(\d+)%/);
+            if (match) percent = parseInt(match[1], 10);
+          }
+          const windows = electron.BrowserWindow.getAllWindows();
+          windows.forEach((win) => {
+            win.webContents.send("clone-progress", {
+              stage,
+              percent,
+              message: message.trim()
+            });
+          });
+        });
+        cloneProcess.on("close", (code) => {
+          if (code === 0) {
+            resolve({ success: true, path: fullPath });
+          } else {
+            resolve({
+              success: false,
+              path: "",
+              error: errorOutput || `Clone failed with code ${code}`
+            });
+          }
+        });
+        cloneProcess.on("error", (err) => {
+          resolve({
+            success: false,
+            path: "",
+            error: err.message
+          });
+        });
+      });
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getBranches",
+    async (_, repoPath) => {
+      try {
+        const output = await runGitCommand(
+          repoPath,
+          "branch -a --format='%(refname:short)|%(HEAD)'"
+        );
+        const branches = [];
+        const lines = output.split("\n").filter((l) => l.trim());
+        for (const line of lines) {
+          const [name, head] = line.replace(/'/g, "").split("|");
+          if (!name || name.includes("HEAD")) continue;
+          const isRemote = name.startsWith("remotes/") || name.startsWith("origin/");
+          const cleanName = name.replace(/^remotes\//, "");
+          if (!branches.find((b) => b.name === cleanName)) {
+            branches.push({
+              name: cleanName,
+              isCurrent: head === "*",
+              isRemote
+            });
+          }
+        }
+        return branches;
+      } catch (error) {
+        console.error("Failed to get branches:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getStatus",
+    async (_, repoPath) => {
+      try {
+        const { stdout } = await execAsync$1("git status --porcelain", {
+          cwd: repoPath,
+          maxBuffer: 50 * 1024 * 1024
+        });
+        const changes = [];
+        const lines = stdout.split("\n").filter((l) => l.length > 0);
+        console.log("[git:getStatus] Raw output:", JSON.stringify(stdout));
+        console.log("[git:getStatus] Parsed lines:", lines);
+        for (const line of lines) {
+          if (line.length < 3) continue;
+          const stagedStatus = line[0];
+          const unstagedStatus = line[1];
+          const filePath = line.substring(3).trim();
+          console.log(
+            `[git:getStatus] Line: "${line}" | stagedStatus: "${stagedStatus}" | unstagedStatus: "${unstagedStatus}" | path: "${filePath}"`
+          );
+          if (stagedStatus === "?" && unstagedStatus === "?") {
+            changes.push({
+              path: filePath,
+              status: "untracked",
+              staged: false
+            });
+            continue;
+          }
+          if (stagedStatus !== " " && stagedStatus !== "?") {
+            console.log(`[git:getStatus] Adding as STAGED: ${filePath}`);
+            changes.push({
+              path: filePath,
+              status: getStatusLabel(stagedStatus),
+              staged: true
+            });
+          }
+          if (unstagedStatus !== " " && unstagedStatus !== "?") {
+            console.log(`[git:getStatus] Adding as UNSTAGED: ${filePath}`);
+            changes.push({
+              path: filePath,
+              status: getStatusLabel(unstagedStatus),
+              staged: false
+            });
+          }
+        }
+        console.log("[git:getStatus] Final changes:", changes);
+        return changes;
+      } catch (error) {
+        console.error("Failed to get status:", error);
+        throw error;
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getAheadBehind",
+    async (_, repoPath) => {
+      try {
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+        const branch = currentBranch.trim();
+        try {
+          await runGitCommand(repoPath, `rev-parse --verify origin/${branch}`);
+        } catch {
+          return { ahead: 0, behind: 0 };
+        }
+        const output = await runGitCommand(
+          repoPath,
+          `rev-list --left-right --count ${branch}...origin/${branch}`
+        );
+        const parts = output.trim().split(/\s+/);
+        const ahead = parseInt(parts[0] || "0", 10);
+        const behind = parseInt(parts[1] || "0", 10);
+        return { ahead, behind };
+      } catch (error) {
+        console.error("Failed to get ahead/behind:", error);
+        return { ahead: 0, behind: 0 };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:rebase",
+    async (_, repoPath) => {
+      let stashed = false;
+      try {
+        const statusOutput = await runGitCommand(
+          repoPath,
+          "status --porcelain"
+        );
+        const isDirty = statusOutput.trim().length > 0;
+        if (isDirty) {
+          await runGitCommand(
+            repoPath,
+            'stash push -u -m "Auto stash by RepoInsight"'
+          );
+          stashed = true;
+        }
+        const currentBranch = await runGitCommand(
+          repoPath,
+          "rev-parse --abbrev-ref HEAD"
+        );
+        await new Promise((resolve, reject) => {
+          const args = ["pull", "--rebase", "origin", currentBranch.trim()];
+          const gitProcess = child_process.spawn("git", args, {
+            cwd: repoPath,
+            stdio: ["ignore", "pipe", "pipe"]
+          });
+          let stderr = "";
+          gitProcess.stderr.on("data", (data) => {
+            stderr += data.toString();
+          });
+          gitProcess.on("close", (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(
+                new Error(
+                  stderr || `git pull --rebase failed with code ${code}`
+                )
+              );
+            }
+          });
+          gitProcess.on("error", (err) => {
+            reject(err);
+          });
+        });
+        if (stashed) {
+          try {
+            await runGitCommand(repoPath, "stash pop");
+          } catch (e) {
+            console.warn("Stash pop conflict:", e);
+            return {
+              success: true,
+              message: "Đã rebase thành công, nhưng có xung đột khi khôi phục stash. Vui lòng kiểm tra và giải quyết xung đột.",
+              stashed: true,
+              conflict: true
+            };
+          }
+        }
+        return {
+          success: true,
+          message: stashed ? "Đã rebase và khôi phục thay đổi thành công!" : "Đã rebase thành công!",
+          stashed
+        };
+      } catch (error) {
+        console.error("Rebase failed:", error);
+        if (stashed) {
+          try {
+            await runGitCommand(repoPath, "stash pop");
+          } catch (popError) {
+            console.error("Failed to pop stash after rebase error:", popError);
+          }
+        }
+        return {
+          success: false,
+          message: error.message || "Rebase thất bại. Vui lòng kiểm tra log.",
+          stashed
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:checkoutBranch",
+    async (_, repoPath, branchName) => {
+      try {
+        await runGitCommand(repoPath, `checkout ${branchName}`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Failed to switch branch"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:stageFile",
+    async (_, repoPath, filePath) => {
+      try {
+        await runGitCommand(repoPath, `add "${filePath}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Stage failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:unstageFile",
+    async (_, repoPath, filePath) => {
+      try {
+        await runGitCommand(repoPath, `reset HEAD "${filePath}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unstage failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:stageAll",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "add -A");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Stage all failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:unstageAll",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "reset HEAD");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unstage all failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:discardFile",
+    async (_, repoPath, filePath) => {
+      try {
+        const statusOutput = await runGitCommand(
+          repoPath,
+          `status --porcelain "${filePath}"`
+        );
+        if (statusOutput.startsWith("??")) {
+          const fullPath = path.join(repoPath, filePath);
+          const fs2 = await import("fs/promises");
+          await fs2.unlink(fullPath);
+        } else {
+          await runGitCommand(repoPath, `checkout -- "${filePath}"`);
+        }
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Discard failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:discardAll",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "checkout -- .");
+        await runGitCommand(repoPath, "clean -fd");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Discard all failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:commit",
+    async (_, repoPath, message) => {
+      try {
+        const escapedMessage = message.replace(/"/g, '\\"');
+        await runGitCommand(repoPath, `commit -m "${escapedMessage}"`);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Commit failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:push",
+    async (_, repoPath) => {
+      try {
+        await runGitCommand(repoPath, "push");
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Push failed"
+        };
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getStagedDiff",
+    async (_, repoPath) => {
+      try {
+        return await runGitCommand(repoPath, "diff --cached");
+      } catch (error) {
+        console.error("Failed to get staged diff:", error);
+        return "";
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getUnstagedDiff",
+    async (_, repoPath) => {
+      try {
+        return await runGitCommand(repoPath, "diff");
+      } catch (error) {
+        console.error("Failed to get unstaged diff:", error);
+        return "";
+      }
+    }
+  );
+  electron.ipcMain.handle(
+    "git:getFileDiff",
+    async (_, repoPath, filePath, staged) => {
+      try {
+        const stagedFlag = staged ? "--cached" : "";
+        return await runGitCommand(
+          repoPath,
+          `diff ${stagedFlag} -- "${filePath}"`
+        );
+      } catch (error) {
+        console.error("Failed to get file diff:", error);
+        return "";
+      }
+    }
+  );
+}
+function getStatusLabel(code) {
+  const statusMap = {
+    M: "modified",
+    A: "added",
+    D: "deleted",
+    R: "renamed",
+    C: "copied",
+    U: "unmerged",
+    "?": "untracked",
+    "!": "ignored"
+  };
+  return statusMap[code] || "unknown";
+}
+function getLanguageFromExtension(ext) {
+  const languageMap = {
+    js: "JavaScript",
+    jsx: "JavaScript (JSX)",
+    ts: "TypeScript",
+    tsx: "TypeScript (TSX)",
+    vue: "Vue",
+    py: "Python",
+    rb: "Ruby",
+    java: "Java",
+    cpp: "C++",
+    c: "C",
+    go: "Go",
+    rs: "Rust",
+    php: "PHP",
+    swift: "Swift",
+    kt: "Kotlin",
+    cs: "C#",
+    html: "HTML",
+    css: "CSS",
+    scss: "SCSS",
+    less: "LESS",
+    json: "JSON",
+    yaml: "YAML",
+    yml: "YAML",
+    md: "Markdown",
+    sh: "Shell",
+    bash: "Bash"
+  };
+  return languageMap[ext.toLowerCase()] || ext.toUpperCase();
+}
+function extractFunctions(content) {
+  const functions = [];
+  const lines = content.split("\n");
+  const patterns = [
+    // function declarations: function name(params)
+    /^\s*(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)/,
+    // arrow functions: const name = (params) =>
+    /^\s*(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?\(([^)]*)\)\s*=>/,
+    // method declarations: name(params) {
+    /^\s*(?:async\s+)?(\w+)\s*\(([^)]*)\)\s*\{/,
+    // class methods: methodName(params) {
+    /^\s*(?:public|private|protected|static|async)?\s*(\w+)\s*\(([^)]*)\)\s*(?::\s*\w+)?\s*\{/
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    for (const pattern of patterns) {
+      const match = line.match(pattern);
+      if (match && match[1] && !["if", "for", "while", "switch", "catch", "constructor"].includes(
+        match[1]
+      )) {
+        const params = match[2] ? match[2].split(",").map((p) => p.trim().split(":")[0].trim()).filter((p) => p) : [];
+        let endLine = i;
+        let braceCount = 0;
+        let started = false;
+        for (let j = i; j < Math.min(i + 100, lines.length); j++) {
+          for (const char of lines[j]) {
+            if (char === "{") {
+              braceCount++;
+              started = true;
+            } else if (char === "}") {
+              braceCount--;
+            }
+          }
+          if (started && braceCount === 0) {
+            endLine = j;
+            break;
+          }
+        }
+        functions.push({
+          name: match[1],
+          startLine: i + 1,
+          endLine: endLine + 1,
+          parameters: params
+        });
+        break;
+      }
+    }
+  }
+  return functions;
+}
+const execAsync = util.promisify(child_process.exec);
+function registerSettingsHandlers() {
+  const userDataPath = electron.app.getPath("userData");
+  const configPath = path.join(userDataPath, "config.json");
+  electron.ipcMain.handle("settings:getGitConfig", async (_, key, repoPath) => {
+    try {
+      const cmd = repoPath ? `git config ${key}` : `git config --global ${key}`;
+      const cwd = repoPath ? repoPath : void 0;
+      const { stdout } = await execAsync(cmd, { cwd });
+      return stdout.trim();
+    } catch (e) {
+      return "";
+    }
+  });
+  electron.ipcMain.handle("settings:setGitConfig", async (_, key, value, repoPath) => {
+    try {
+      const cmd = repoPath ? `git config --local ${key} "${value}"` : `git config --global ${key} "${value}"`;
+      const cwd = repoPath ? repoPath : void 0;
+      await execAsync(cmd, { cwd });
+      return true;
+    } catch (e) {
+      console.error(`Failed to set git config ${key}:`, e);
+      throw e;
+    }
+  });
+  electron.ipcMain.handle("settings:getApiKey", async () => {
+    try {
+      if (!fs.existsSync(configPath)) return "";
+      const content = await promises.readFile(configPath, "utf-8");
+      const config = JSON.parse(content);
+      return config.geminiApiKey || "";
+    } catch (e) {
+      console.error("Failed to read config:", e);
+      return "";
+    }
+  });
+  electron.ipcMain.handle("settings:setApiKey", async (_, apiKey) => {
+    try {
+      let config = {};
+      if (fs.existsSync(configPath)) {
+        const content = await promises.readFile(configPath, "utf-8");
+        try {
+          config = JSON.parse(content);
+        } catch {
+        }
+      }
+      config.geminiApiKey = apiKey;
+      await promises.writeFile(configPath, JSON.stringify(config, null, 2));
+      return true;
+    } catch (e) {
+      console.error("Failed to save config:", e);
+      throw e;
+    }
+  });
+}
+let mainWindow = null;
+function createWindow() {
+  const iconPath = process.env.VITE_DEV_SERVER_URL ? path.join(__dirname, "../../public/icon.png") : path.join(__dirname, "../dist/icon.png");
+  mainWindow = new electron.BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1e3,
+    minHeight: 700,
+    icon: iconPath,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: false,
+      contextIsolation: true
+    },
+    backgroundColor: "#0f172a"
+  });
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+  }
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+}
+electron.app.whenReady().then(() => {
+  registerGitHandlers();
+  registerSettingsHandlers();
+  createWindow();
+});
+electron.app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    electron.app.quit();
+  }
+});
+electron.app.on("activate", () => {
+  if (electron.BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+electron.ipcMain.handle("dialog:selectRepository", async () => {
+  const result = await electron.dialog.showOpenDialog(mainWindow, {
+    properties: ["openDirectory"],
+    title: "Select Git Repository"
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, path: null };
+  }
+  const selectedPath = result.filePaths[0];
+  const gitPath = path.join(selectedPath, ".git");
+  const isValidRepo = fs.existsSync(gitPath);
+  return {
+    success: isValidRepo,
+    path: selectedPath,
+    error: isValidRepo ? null : "Selected folder is not a Git repository (.git folder not found)"
+  };
+});
+electron.ipcMain.handle("dialog:selectDirectory", async () => {
+  const result = await electron.dialog.showOpenDialog(mainWindow, {
+    properties: ["openDirectory", "createDirectory"],
+    title: "Select Clone Destination"
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    return { success: false, path: null };
+  }
+  return { success: true, path: result.filePaths[0] };
+});
